@@ -3,39 +3,26 @@ import {
   useSupabaseClient,
   useSession,
 } from '@supabase/auth-helpers-react'
-import { Heading } from '@chakra-ui/react'
 import LoginForm from './LoginForm'
-import { useColorModeValue, Box, Text } from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
 import NewSubscription from './NewSub'
 import SetUserData from './SetUserData'
+import { useEffect, useState } from 'react'
 
 export default function Home() {
   const user = useUser()
   const session = useSession()
-
-  const [newSubscriptionRenderCount, setNewSubscriptionRenderCount] =
-    useState(0)
-  const [userReady, setUserReady] = useState(false)
+  const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
     if (user) {
-      setUserReady(true)
+      setIsReady(true)
     }
   }, [user])
 
-  useEffect(() => {
-    setNewSubscriptionRenderCount((prevCount) => prevCount + 1)
-  }, [user])
-
-  if (userReady) {
+  if (isReady) {
     return (
       <>
-        {console.log(
-          `<NewSubscription /> rendered ${newSubscriptionRenderCount} times`
-        )}
         <NewSubscription />
-        <SetUserData />
       </>
     )
   } else {

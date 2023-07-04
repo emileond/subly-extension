@@ -67,9 +67,9 @@ import { isValidUrl } from '../utils/isValidUrl'
 import { colorContrast } from '../utils/colorContrast'
 import CurrenciesList from '../components/CurrenciesList'
 import { getAbbreviation } from '../utils/getAbbreviation'
-import SetUserData from '../components/SetUserData'
 import SubsIconUpload from '../components/SubsIconUpload'
 import NewTagForm from '../components/NewTagForm'
+import SetUserData from './SetUserData'
 
 export default function NewSubscription({ subQuery }) {
   const supabaseClient = useSupabaseClient()

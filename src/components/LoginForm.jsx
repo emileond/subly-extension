@@ -46,13 +46,6 @@ const LoginForm = ({ redirectTo, description }) => {
   const session = useSession()
   const supabaseClient = useSupabaseClient()
 
-  useEffect(() => {
-    if (user) {
-      console.log('user', user)
-      console.log('session', session)
-    }
-  }, [user, session])
-
   // supabase login with email and password
   const loginWithEmailAndPassword = async (email, password) => {
     const { user, error } = await supabaseClient.auth.signInWithPassword({

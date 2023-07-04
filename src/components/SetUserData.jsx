@@ -36,7 +36,6 @@ const SetUserData = () => {
   const bg = useColorModeValue('white', 'gray.800')
 
   const getUserProfile = async () => {
-    setIsFetching(true)
     try {
       const timeStart = Date.now()
       const { data, error } = await supabaseClient
@@ -57,11 +56,9 @@ const SetUserData = () => {
     } catch (error) {
       console.error(error)
     }
-    setIsFetching(false)
   }
 
   const getWorkspace = async () => {
-    setIsFetching(true)
     try {
       const timeStart = Date.now()
 
@@ -124,15 +121,15 @@ const SetUserData = () => {
   }
 
   useEffect(() => {
-    if (user && !userProfile && !isLoading) {
+    if (!userProfile) {
       setIsFetching(true)
       console.log('Fetching user profile and workspace...')
       getUserProfile()
         .then(() => getWorkspace())
-        .then(() => setIsFetching(false))
         .catch((error) => console.error(error))
+      setIsFetching(false)
     }
-  }, [user, userProfile, isLoading])
+  }, [userProfile])
 
   if (isFetching) {
     return (
