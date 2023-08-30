@@ -1,3 +1,4 @@
+/*global chrome*/
 import { useEffect, useState } from 'react'
 import {
   useUser,
@@ -60,21 +61,28 @@ const LoginForm = ({ redirectTo, description }) => {
 
   // supabase login with google
   const loginWithGoogle = async () => {
-    const { user, error } = await supabaseClient.auth.signInWithOAuth({
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'google',
+    })
+    await chrome.runtime.sendMessage({
+      action: 'loginWithGoogle',
+      payload: data,
     })
     if (error) {
       setAuthErr(error)
     }
-    if (user) {
-      console.log(user)
+    if (data) {
+      console.log(data)
     }
   }
 
   // supabase login with apple
   const loginWithApple = async () => {
-    const { user, error } = await supabaseClient.auth.signInWithOAuth({
+    const { data, error } = await supabaseClient.auth.signInWithOAuth({
       provider: 'apple',
+    })
+    await chrome.runtime.sendMessage({
+      action: 'navigateToLogin',
     })
     if (error) {
       setAuthErr(error)

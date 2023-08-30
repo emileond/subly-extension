@@ -70,6 +70,7 @@ import { getAbbreviation } from '../utils/getAbbreviation'
 import SubsIconUpload from '../components/SubsIconUpload'
 import NewTagForm from '../components/NewTagForm'
 import SetUserData from './SetUserData'
+import SetProjectsData from './SetProjectsData'
 
 export default function NewSubscription({ subQuery }) {
   const supabaseClient = useSupabaseClient()
@@ -183,7 +184,13 @@ export default function NewSubscription({ subQuery }) {
   }
 
   const [subscriptionCurrency, setSubscriptionCurrency] = useState(
-    sub?.currency ? sub?.currency : currentWorkspace?.currency
+    currentWorkspace?.currency
+      ? currentWorkspace?.currency
+      : {
+          cc: 'USD',
+          symbol: '$',
+          name: 'US Dollar',
+        }
   )
 
   const onSubmit = async (data) => {
@@ -511,14 +518,10 @@ export default function NewSubscription({ subQuery }) {
   return (
     <>
       <SetUserData />
+      <SetProjectsData />
       <VStack justifyContent="start" maxW="fit-content" margin="auto">
         <HStack py={6} align="center" justifyContent="start" w="100%">
-          <IconButton
-            aria-label="back"
-            icon={<BiArrowBack />}
-            onClick={handleBack}
-          />
-          <Heading as="h1" size="lg" fontSize="26px" mr={8}>
+          <Heading as="h1" size="md">
             New subscription
           </Heading>
         </HStack>
@@ -562,7 +565,7 @@ export default function NewSubscription({ subQuery }) {
               boxShadow="rgba(0, 0, 0, 0.05) 0px 4px 6px -1px, rgba(0, 0, 0, 0.02) 0px 2px 4px -1px"
             >
               <VStack align="start" spacing={6}>
-                <Heading as="h2" fontSize="18px" color={secondaryHeading}>
+                <Heading as="h2" size="sm" color={secondaryHeading}>
                   General
                 </Heading>
                 <HStack w="100%" spacing={4} align="start">

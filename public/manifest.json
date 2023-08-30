@@ -1,12 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Subly",
-  "version": "1.0",
+  "version": "0.0.0.1",
   "action": {
     "default_popup": "index.html",
-    "default_title": "Open the popup"
+    "default_title": "Subly - Subscriptions manager"
   },
   "permissions": ["storage", "tabs"],
+  "background": {
+    "service_worker": "sw.js"
+  },
+  "externally_connectable": {
+    "matches": ["*://web.subly.app/*", "http://localhost:3000/*"]
+  },
   "icons": {
     "16": "icon-512.png",
     "48": "icon-512.png",

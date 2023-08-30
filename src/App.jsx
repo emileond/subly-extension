@@ -26,8 +26,6 @@ function App() {
   const [userProfile, setUserProfile] = useState(null)
   const [userSettings, setUserSettings] = useState(null)
   const [userCategories, setUserCategories] = useState(null)
-  const [subscriptions, setSubscriptions] = useState([])
-  const [recurringExpenses, setRecurringExpenses] = useState([])
   const [workspaces, setWorkspaces] = useState(null)
   const [currentWorkspace, setCurrentWorkspace] = useState(null)
   const [projects, setProjects] = useState(null)
