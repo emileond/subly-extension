@@ -1,4 +1,4 @@
-import { Container, Heading, VStack } from '@chakra-ui/react'
+import { Box, Container, Heading, VStack } from '@chakra-ui/react'
 import { createClient } from '@supabase/supabase-js'
 import { SessionContextProvider } from '@supabase/auth-helpers-react'
 import { ChakraProvider } from '@chakra-ui/react'
@@ -54,13 +54,13 @@ function App() {
                       <TagsContext.Provider value={[tags, setTags]}>
                         <ChakraProvider>
                           <BrowserRouter>
-                            <Container m="0 auto" maxW="1280px" minW="400px">
-                              <Home />
+                            <Box maxH="600px" overflow="auto">
                               <Nav />
-                            </Container>
-                            <Routes>
-                              <Route path="/" element={<SubsView />}></Route>
-                            </Routes>
+                              <Home />
+                              {/* <Routes>
+                                <Route path="/" element={<Home />}></Route>
+                              </Routes> */}
+                            </Box>
                           </BrowserRouter>
                         </ChakraProvider>
                       </TagsContext.Provider>

@@ -8,7 +8,7 @@ import {
 import LoginForm from './LoginForm'
 import NewSubscription from './NewSub'
 import { useEffect, useState } from 'react'
-import { Text } from '@chakra-ui/react'
+import { Text, Container } from '@chakra-ui/react'
 import SetProjectsData from './SetProjectsData'
 
 export default function Home() {
@@ -63,15 +63,15 @@ export default function Home() {
 
   if (isReady) {
     return (
-      <>
-        <Text>{user?.email}</Text>
-        {/* <SetProjectsData /> */}
+      <Container m="0 auto" maxW="800px" minW="380px">
         <NewSubscription />
-      </>
+      </Container>
     )
   } else {
     return (
-      <LoginForm redirectTo="/subs" description="Sign in to your account" />
+      <Container m="0 auto" maxW="800px" minW="380px">
+        <LoginForm redirectTo="/subs" description="Sign in to your account" />
+      </Container>
     )
   }
 }

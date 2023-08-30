@@ -16,6 +16,7 @@ import {
   Box,
   Button,
   Center,
+  Card,
   FormControl,
   FormLabel,
   FormErrorMessage,
@@ -520,21 +521,21 @@ export default function NewSubscription({ subQuery }) {
       <SetUserData />
       <SetProjectsData />
       <VStack justifyContent="start" maxW="fit-content" margin="auto">
-        <HStack py={6} align="center" justifyContent="start" w="100%">
+        <HStack py={3} align="center" justifyContent="start" w="100%">
           <Heading as="h1" size="md">
-            New subscription
+            Add subscription
           </Heading>
         </HStack>
         <Stack
           direction={['column', 'column', 'row-reverse', 'row-reverse']}
           alignItems={['center', 'center', 'start', 'start']}
           justifyContent="center"
-          spacing={6}
+          spacing={4}
           pb="6vh"
           overflowX="hidden"
         >
           <Box minW="sm" maxW="max-content">
-            <Heading size="sm" color={secondaryText} mb={2}>
+            <Heading size="xs" color={secondaryText} mb={2}>
               Preview
             </Heading>
             <CardPreview
@@ -555,20 +556,15 @@ export default function NewSubscription({ subQuery }) {
             as="form"
             onSubmit={handleSubmit(onSubmit)}
             maxW="xl"
-            spacing={6}
+            spacing={4}
           >
-            <Box
-              bg={bg}
-              p={[4, 4, 6]}
-              w="100%"
-              borderRadius={8}
-              boxShadow="rgba(0, 0, 0, 0.05) 0px 4px 6px -1px, rgba(0, 0, 0, 0.02) 0px 2px 4px -1px"
-            >
-              <VStack align="start" spacing={6}>
+            <Divider />
+            <Card w="100%">
+              <VStack align="start" spacing={4}>
                 <Heading as="h2" size="sm" color={secondaryHeading}>
                   General
                 </Heading>
-                <HStack w="100%" spacing={4} align="start">
+                <HStack w="100%" spacing={3} align="start">
                   <FormControl isInvalid={errors.name}>
                     <FormLabel color={secondaryText}>
                       Name{' '}
@@ -619,7 +615,7 @@ export default function NewSubscription({ subQuery }) {
                     <FormHelperText>Edit categories in settings</FormHelperText>
                   </FormControl>
                 </HStack>
-                <HStack w="100%" spacing={4} align="start">
+                <HStack w="100%" spacing={3} align="start">
                   <FormControl>
                     <FormLabel color={secondaryText}>Website</FormLabel>
                     <InputGroup>
@@ -667,7 +663,7 @@ export default function NewSubscription({ subQuery }) {
                     </FormErrorMessage>
                   </FormControl>
                 </HStack>
-                <HStack w="100%" spacing={4} align="start">
+                <HStack w="100%" spacing={3} align="start">
                   <VStack w="100%" align="start">
                     <Text
                       as="label"
@@ -787,26 +783,21 @@ export default function NewSubscription({ subQuery }) {
                           onNewTagModalOpen()
                         }}
                       />
-                      <FormHelperText pb={2}>
+                      <FormHelperText pb={2} boxShadow="none">
                         Manage tags in settings
                       </FormHelperText>
                     </FormControl>
                   )}
                 />
               </VStack>
-            </Box>
-            <Box
-              bg={bg}
-              p={[4, 4, 6]}
-              w="100%"
-              borderRadius={8}
-              boxShadow="rgba(0, 0, 0, 0.05) 0px 4px 6px -1px, rgba(0, 0, 0, 0.02) 0px 2px 4px -1px"
-            >
-              <VStack align="start" spacing={6}>
-                <Heading as="h2" fontSize="18px" color={secondaryHeading}>
+            </Card>
+            <Divider />
+            <Card w="100%">
+              <VStack align="start" spacing={4}>
+                <Heading as="h2" size="sm" color={secondaryHeading}>
                   Expense
                 </Heading>
-                <HStack w="100%" spacing={4}>
+                <HStack w="100%" spacing={3}>
                   <FormControl isInvalid={errors.cost}>
                     <FormLabel color={secondaryText}>
                       Cost{' '}
@@ -883,11 +874,11 @@ export default function NewSubscription({ subQuery }) {
                   </FormControl>
                 </HStack>
                 <Divider />
-                <Heading as="h2" fontSize="18px" color={secondaryHeading}>
+                <Heading as="h2" size="sm" color={secondaryHeading}>
                   Billing
                 </Heading>
                 {isRecurring && (
-                  <Stack direction={['column', 'row']} w="100%" spacing={4}>
+                  <Stack direction={['column', 'row']} w="100%" spacing={3}>
                     <FormControl isInvalid={errors?.billing_freq}>
                       <FormLabel color={secondaryText}>Period</FormLabel>
                       <HStack>
@@ -958,11 +949,7 @@ export default function NewSubscription({ subQuery }) {
                   </Stack>
                 )}
                 {isRecurring && (
-                  <Accordion
-                    allowToggle
-                    w="100%"
-                    borderBottomColor="transparent"
-                  >
+                  <Accordion allowToggle w="100%">
                     <AccordionItem>
                       <AccordionButton>
                         <HStack w="100%" justify="center">
@@ -971,7 +958,7 @@ export default function NewSubscription({ subQuery }) {
                         </HStack>
                       </AccordionButton>
                       <AccordionPanel px={0}>
-                        <HStack align="start" spacing={4} w="100%">
+                        <HStack align="start" spacing={3} w="100%">
                           <FormControl isInvalid={errors.initialPaymentDate}>
                             <FormLabel color={secondaryText}>
                               First Payment
@@ -1016,7 +1003,7 @@ export default function NewSubscription({ subQuery }) {
                             </FormErrorMessage>
                           </FormControl>
                         </HStack>
-                        <HStack align="start" spacing={4} w="100%">
+                        <HStack align="start" spacing={3} w="100%">
                           <FormControl isInvalid={errors.renewal_date}>
                             <FormLabel color={secondaryText}>
                               Renewal Date
@@ -1047,7 +1034,7 @@ export default function NewSubscription({ subQuery }) {
                     </AccordionItem>
                   </Accordion>
                 )}
-                <HStack w="100%" spacing={4}>
+                <HStack w="100%" spacing={3}>
                   {!isRecurring && (
                     <>
                       <FormControl isInvalid={errors.initialPaymentDate}>
@@ -1095,21 +1082,16 @@ export default function NewSubscription({ subQuery }) {
                   )}
                 </HStack>
               </VStack>
-            </Box>
+            </Card>
+            <Divider />
             {isRecurring && (
-              <Box
-                bg={bg}
-                p={[4, 4, 6]}
-                w="100%"
-                borderRadius={8}
-                boxShadow="rgba(0, 0, 0, 0.05) 0px 4px 6px -1px, rgba(0, 0, 0, 0.02) 0px 2px 4px -1px"
-              >
-                <VStack align="start" spacing={6}>
+              <Card w="100%">
+                <VStack align="start" spacing={3}>
                   <VStack align="start">
-                    <Heading as="h2" fontSize="18px" color={secondaryHeading}>
+                    <Heading as="h2" size="sm" color={secondaryHeading}>
                       Reminders
                     </Heading>
-                    <Text>
+                    <Text fontSize="sm">
                       Set up to 3 reminders - you must enter a next payment date
                     </Text>
                   </VStack>
@@ -1180,19 +1162,13 @@ export default function NewSubscription({ subQuery }) {
                     </FormHelperText>
                   </FormControl>
                 </VStack>
-              </Box>
+              </Card>
             )}
             {!isRecurring && (
-              <Box
-                bg={bg}
-                p={[4, 4, 6]}
-                w="100%"
-                borderRadius={8}
-                boxShadow="rgba(0, 0, 0, 0.05) 0px 4px 6px -1px, rgba(0, 0, 0, 0.02) 0px 2px 4px -1px"
-              >
-                <VStack align="start" spacing={6}>
+              <Card>
+                <VStack align="start" spacing={3}>
                   <VStack align="start">
-                    <Heading as="h2" fontSize="18px" color={secondaryHeading}>
+                    <Heading as="h2" size="sm" color={secondaryHeading}>
                       Reminders
                     </Heading>
                     <Text>
@@ -1255,17 +1231,12 @@ export default function NewSubscription({ subQuery }) {
                     </Select>
                   </FormControl>
                 </VStack>
-              </Box>
+              </Card>
             )}
-            <Box
-              bg={bg}
-              p={[4, 4, 6]}
-              w="100%"
-              borderRadius={8}
-              boxShadow="rgba(0, 0, 0, 0.05) 0px 4px 6px -1px, rgba(0, 0, 0, 0.02) 0px 2px 4px -1px"
-            >
-              <VStack align="start" spacing={4}>
-                <Heading as="h2" fontSize="18px" color={secondaryHeading}>
+            <Divider />
+            <Card w="100%">
+              <VStack align="start" spacing={3}>
+                <Heading as="h2" size="sm" color={secondaryHeading}>
                   Additional Information
                 </Heading>
                 {paymentMethods?.length > 0 && (
@@ -1297,19 +1268,13 @@ export default function NewSubscription({ subQuery }) {
                   </FormControl>
                 )}
               </VStack>
-            </Box>
-            <Box
-              py={2}
-              w="100%"
-              pos={['sticky', 'sticky', 'relative']}
-              bottom={0}
-              bg={bg}
-            >
+            </Card>
+            <Box p={2} w="100%" pos="fixed" bottom={0} bg={bg}>
               <Button
                 type="submit"
                 isLoading={isLoading}
                 width="100%"
-                size="lg"
+                size="md"
                 colorScheme="gray"
                 bg={buttonBg}
                 color={'whiteAlpha.900'}

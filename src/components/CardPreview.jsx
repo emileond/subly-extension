@@ -57,8 +57,8 @@ function CardPreview({
     <Flex
       alignItems="center"
       justifyContent="space-between"
-      px={6}
-      py={6}
+      px={4}
+      py={4}
       borderRadius={20}
       bg={gradients[cardColor] ? gradients[cardColor] : cardColor}
       textAlign="center"
@@ -153,7 +153,7 @@ function CardPreview({
           <Text>{subscriptionCategory}</Text>
         </Box>
       </HStack>
-      <VStack zIndex={1} align="end" spacing={1} minW="fit-content">
+      <VStack align="end" spacing={1} minW="fit-content">
         <Heading
           size="md"
           noOfLines={1}
