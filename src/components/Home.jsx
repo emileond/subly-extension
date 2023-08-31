@@ -10,11 +10,11 @@ import NewSubscription from './NewSub'
 import { useEffect, useState } from 'react'
 import { Text, Container } from '@chakra-ui/react'
 import SetProjectsData from './SetProjectsData'
+import SetUserData from './SetUserData'
+import Nav from './Nav'
 
 export default function Home() {
   const user = useUser()
-  const session = useSession()
-  const [isReady, setIsReady] = useState(false)
   const supabaseClient = useSupabaseClient()
 
   const setSessionData = async (accessToken, refreshToken) => {
@@ -55,23 +55,21 @@ export default function Home() {
     )
   }, [])
 
-  useEffect(() => {
-    if (user) {
-      setIsReady(true)
-    }
-  }, [user])
-
-  if (isReady) {
-    return (
-      <Container m="0 auto" maxW="800px" minW="380px">
-        <NewSubscription />
-      </Container>
-    )
-  } else {
-    return (
-      <Container m="0 auto" maxW="800px" minW="380px">
-        <LoginForm redirectTo="/subs" description="Sign in to your account" />
-      </Container>
-    )
-  }
+  return (
+    <>
+      {user ? (
+        <>
+          <SetUserData />
+          <Nav user={user} />
+          <Container m="0 auto" maxW="800px" minW="420px">
+            <NewSubscription />
+          </Container>
+        </>
+      ) : (
+        <Container m="0 auto" maxW="800px" minW="420px">
+          <LoginForm />
+        </Container>
+      )}
+    </>
+  )
 }

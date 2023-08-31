@@ -1,20 +1,14 @@
 import {
   Box,
-  Button,
   Heading,
   HStack,
   Flex,
-  IconButton,
-  Stat,
-  StatNumber,
-  StatHelpText,
   Text,
   VStack,
   Image,
 } from '@chakra-ui/react'
 import { rgbDataURL } from '../utils/rgbDataURL'
 import { colorContrast } from '../utils/colorContrast'
-import { BiUpload } from 'react-icons/bi'
 import { numberFormatter } from '../utils/numberFormatter'
 
 function CardPreview({
@@ -94,6 +88,7 @@ function CardPreview({
                 : 'blackAlpha.200',
             backgroundBlendMode: 'color',
             borderRadius: '50%',
+            zIndex: 0,
           }}
           _after={{
             top: '-95px',
@@ -109,6 +104,7 @@ function CardPreview({
                 : 'blackAlpha.100',
             backgroundBlendMode: 'color',
             borderRadius: '50%',
+            zIndex: 0,
           }}
         ></Box>
       </Box>
@@ -130,8 +126,6 @@ function CardPreview({
                   ? subscriptionLogo
                   : '/empty-states/light/17.svg'
               }
-              placeholder="blur"
-              blurDataURL={rgbDataURL(2, 129, 210)}
               alt="Subscription logo"
               fill
               sizes="48px"
@@ -153,7 +147,7 @@ function CardPreview({
           <Text>{subscriptionCategory}</Text>
         </Box>
       </HStack>
-      <VStack align="end" spacing={1} minW="fit-content">
+      <VStack align="end" spacing={1} minW="fit-content" zIndex={1}>
         <Heading
           size="md"
           noOfLines={1}

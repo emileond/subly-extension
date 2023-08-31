@@ -12,6 +12,7 @@ const UserMenuBtn = ({ menu }) => {
   const bg = useColorModeValue('white', 'gray.800')
   return menu ? (
     <MenuButton
+      minW="90px"
       as={Button}
       variant="outline"
       size="md"
@@ -22,6 +23,8 @@ const UserMenuBtn = ({ menu }) => {
     />
   ) : (
     <Button
+      as={HStack}
+      minW="90px"
       variant="outline"
       size="md"
       rightIcon={<BiMenu fontSize="1.2rem" />}

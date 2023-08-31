@@ -1,10 +1,9 @@
+/* global chrome */
 import { Box, Container, Heading, VStack } from '@chakra-ui/react'
 import { createClient } from '@supabase/supabase-js'
-import { SessionContextProvider } from '@supabase/auth-helpers-react'
+import { SessionContextProvider, useUser } from '@supabase/auth-helpers-react'
 import { ChakraProvider } from '@chakra-ui/react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import SubsView from './components/SubsView'
-import Nav from './components/Nav'
 import Home from './components/Home'
 import UserProfileContext from './context/userProfileContext'
 import UserCategoriesContext from './context/userCategoriesContext'
@@ -54,13 +53,10 @@ function App() {
                       <TagsContext.Provider value={[tags, setTags]}>
                         <ChakraProvider>
                           <BrowserRouter>
-                            <Box maxH="600px" overflow="auto">
-                              <Nav />
-                              <Home />
-                              {/* <Routes>
+                            <Home />
+                            {/* <Routes>
                                 <Route path="/" element={<Home />}></Route>
                               </Routes> */}
-                            </Box>
                           </BrowserRouter>
                         </ChakraProvider>
                       </TagsContext.Provider>

@@ -61,6 +61,7 @@ import {
   NumberIncrementStepper,
   NumberDecrementStepper,
   NumberInputStepper,
+  CircularProgress,
 } from '@chakra-ui/react'
 import { BiArrowBack } from 'react-icons/bi'
 import CardPreview from '../components/CardPreview'
@@ -184,15 +185,11 @@ export default function NewSubscription({ subQuery }) {
     setTags(data)
   }
 
-  const [subscriptionCurrency, setSubscriptionCurrency] = useState(
-    currentWorkspace?.currency
-      ? currentWorkspace?.currency
-      : {
-          cc: 'USD',
-          symbol: '$',
-          name: 'US Dollar',
-        }
-  )
+  const [subscriptionCurrency, setSubscriptionCurrency] = useState({
+    cc: 'USD',
+    symbol: '$',
+    name: 'US Dollar',
+  })
 
   const onSubmit = async (data) => {
     const newSub = {
@@ -513,813 +510,826 @@ export default function NewSubscription({ subQuery }) {
   useEffect(() => {
     if (currentWorkspace) {
       fetchTags()
+      setSubscriptionCurrency(currentWorkspace?.currency)
     }
   }, [currentWorkspace])
 
   return (
     <>
-      <SetUserData />
       <SetProjectsData />
-      <VStack justifyContent="start" maxW="fit-content" margin="auto">
-        <HStack py={3} align="center" justifyContent="start" w="100%">
-          <Heading as="h1" size="md">
-            Add subscription
-          </Heading>
-        </HStack>
-        <Stack
-          direction={['column', 'column', 'row-reverse', 'row-reverse']}
-          alignItems={['center', 'center', 'start', 'start']}
-          justifyContent="center"
-          spacing={4}
-          pb="6vh"
-          overflowX="hidden"
-        >
-          <Box minW="sm" maxW="max-content">
-            <Heading size="xs" color={secondaryText} mb={2}>
-              Preview
+      {currentWorkspace ? (
+        <VStack justifyContent="start" maxW="fit-content" margin="auto">
+          <HStack py={3} align="center" justifyContent="start" w="100%">
+            <Heading as="h1" fontSize="18px">
+              Add subscription
             </Heading>
-            <CardPreview
-              title={enteredName}
-              cardColor={color}
-              subscriptionCost={enteredCost}
-              subscriptionLogo={subLogo}
-              subscriptionCategory={enteredCategory}
-              subscriptionBillingPeriod={
-                isRecurring
-                  ? `${enteredFreq} ${getAbbreviation(enteredRange)}`
-                  : 'One time'
-              }
-              subscriptionCurrency={subscriptionCurrency}
-            />
-          </Box>
-          <VStack
-            as="form"
-            onSubmit={handleSubmit(onSubmit)}
-            maxW="xl"
+          </HStack>
+          <Stack
+            direction={['column', 'column', 'row-reverse', 'row-reverse']}
+            alignItems={['center', 'center', 'start', 'start']}
+            justifyContent="center"
             spacing={4}
+            pb="6vh"
+            overflowX="hidden"
           >
-            <Divider />
-            <Card w="100%">
-              <VStack align="start" spacing={4}>
-                <Heading as="h2" size="sm" color={secondaryHeading}>
-                  General
-                </Heading>
-                <HStack w="100%" spacing={3} align="start">
-                  <FormControl isInvalid={errors.name}>
-                    <FormLabel color={secondaryText}>
-                      Name{' '}
-                      <Text display="inline-block" color="red.500">
-                        *
-                      </Text>
-                    </FormLabel>
-                    <Input
-                      id="name"
-                      autoComplete="off"
-                      {...register('name', {
-                        minLength: {
-                          value: 2,
-                          message: 'Name must be at least 2 characters',
-                        },
-                        maxLength: {
-                          value: 60,
-                          message: 'Name must be less than 60 characters',
-                        },
-                        required: 'Name is required',
-                        pattern: {
-                          value:
-                            /^[a-zA-Z0-9 \-. \s/!@#$&*'+()\u00C0-\u1FFF\u2800-\uFFFD]+$/,
-                          message: 'Some special characters are not allowed',
-                        },
-                      })}
-                      placeholder="Name"
-                      variant={inputVariant}
-                    />
-                    <FormErrorMessage>
-                      {errors.name && errors.name.message}
-                    </FormErrorMessage>
-                  </FormControl>{' '}
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Category</FormLabel>
-                    <Select
-                      id="category"
-                      variant={inputVariant}
-                      placeholder="Select Category"
-                      {...register('category')}
-                    >
-                      {userCategories?.map((value, index) => (
-                        <option key={index} value={value} name="category">
-                          {value}
-                        </option>
-                      ))}
-                    </Select>
-                    <FormHelperText>Edit categories in settings</FormHelperText>
-                  </FormControl>
-                </HStack>
-                <HStack w="100%" spacing={3} align="start">
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Website</FormLabel>
-                    <InputGroup>
-                      <InputLeftAddon
-                        children="https://"
-                        bg={inputBorder}
-                        color={secondaryText}
-                      />
+            <Box minW="sm" maxW="max-content">
+              <Heading size="xs" color={secondaryText} mb={2}>
+                Preview
+              </Heading>
+              <CardPreview
+                title={enteredName}
+                cardColor={color}
+                subscriptionCost={enteredCost}
+                subscriptionLogo={subLogo}
+                subscriptionCategory={enteredCategory}
+                subscriptionBillingPeriod={
+                  isRecurring
+                    ? `${enteredFreq} ${getAbbreviation(enteredRange)}`
+                    : 'One time'
+                }
+                subscriptionCurrency={subscriptionCurrency}
+              />
+            </Box>
+            <VStack
+              as="form"
+              onSubmit={handleSubmit(onSubmit)}
+              maxW="xl"
+              spacing={4}
+            >
+              <Divider />
+              <Card w="100%">
+                <VStack align="start" spacing={4}>
+                  <Heading as="h2" size="sm" color={secondaryHeading}>
+                    General
+                  </Heading>
+                  <HStack w="100%" spacing={3} align="start">
+                    <FormControl isInvalid={errors.name}>
+                      <FormLabel color={secondaryText}>
+                        Name{' '}
+                        <Text display="inline-block" color="red.500">
+                          *
+                        </Text>
+                      </FormLabel>
                       <Input
+                        id="name"
+                        autoComplete="off"
+                        {...register('name', {
+                          minLength: {
+                            value: 2,
+                            message: 'Name must be at least 2 characters',
+                          },
+                          maxLength: {
+                            value: 60,
+                            message: 'Name must be less than 60 characters',
+                          },
+                          required: 'Name is required',
+                          pattern: {
+                            value:
+                              /^[a-zA-Z0-9 \-. \s/!@#$&*'+()\u00C0-\u1FFF\u2800-\uFFFD]+$/,
+                            message: 'Some special characters are not allowed',
+                          },
+                        })}
+                        placeholder="Name"
                         variant={inputVariant}
-                        name="website"
-                        placeholder="netflix.com"
-                        textTransform="lowercase"
-                        {...register('website')}
                       />
-                    </InputGroup>
-                  </FormControl>
-                  <FormControl isInvalid={errors.project_id}>
-                    <FormLabel color={secondaryText}>
-                      Project{' '}
-                      <Text display="inline-block" color="red.500">
-                        *
-                      </Text>
-                    </FormLabel>
-                    <Select
-                      id="project"
-                      {...register('project_id', {
-                        required: 'Project is required',
-                      })}
-                      variant="filled"
-                      placeholder="Select a project"
-                    >
-                      {projects?.map((project) => (
-                        <option
-                          key={project.id}
-                          value={project.id}
-                          name="project"
-                        >
-                          {project.name}
-                        </option>
-                      ))}
-                    </Select>
-                    <FormErrorMessage>
-                      {errors.project_id && errors.project_id.message}
-                    </FormErrorMessage>
-                  </FormControl>
-                </HStack>
-                <HStack w="100%" spacing={3} align="start">
-                  <VStack w="100%" align="start">
-                    <Text
-                      as="label"
-                      display="block"
-                      fontWeight="500"
-                      fontSize="md"
-                      color={secondaryText}
-                      mb={2}
-                    >
-                      Custom Icon
-                    </Text>
-                    <SubsIconUpload setCustomIcon={setCustomIcon} />
-                    <Text fontSize="sm" color="gray.600">
-                      Icon from website is used by default
-                    </Text>
-                  </VStack>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Color</FormLabel>
-                    <Popover variant="picker" isLazy>
-                      <PopoverTrigger>
-                        <Button
-                          aria-label={color}
-                          background={
-                            colors.includes(color) ? `${color}.500` : color
-                          }
-                          height="32px"
-                          width="32px"
-                          padding={0}
-                          minWidth="unset"
-                          borderRadius={3}
-                          border="2px solid"
-                          borderColor="gray.400"
-                        />
-                      </PopoverTrigger>
-                      <PopoverContent width="170px">
-                        <PopoverArrow bg={color} />
-                        <PopoverCloseButton color="white" />
-                        <PopoverHeader
-                          height="100px"
-                          backgroundColor={
-                            colors.includes(color) ? `${color}.500` : color
-                          }
-                          borderTopLeftRadius={5}
-                          borderTopRightRadius={5}
-                          color={
-                            colors.includes(color)
-                              ? colorContrast(colorsHex[color], 'y')
-                              : colorContrast(color, 'y')
-                          }
-                        >
-                          <Center height="100%">{color}</Center>
-                        </PopoverHeader>
-                        <PopoverBody height="140px">
-                          <SimpleGrid columns={5} spacing={2}>
-                            {colors.map((c) => (
-                              <Button
-                                key={c}
-                                aria-label={c}
-                                background={`${c}.500`}
-                                height="22px"
-                                width="22px"
-                                padding={0}
-                                minWidth="unset"
-                                borderRadius={3}
-                                border="1.6px solid"
-                                borderColor={inputBorder}
-                                _hover={{ background: `${c}.700` }}
-                                onClick={() => {
-                                  setColor(c)
-                                }}
-                              ></Button>
-                            ))}
-                          </SimpleGrid>
-                          <FormControl>
-                            <Input
-                              maxLength={7}
-                              borderRadius={3}
-                              marginTop={3}
-                              placeholder="#EAEAEA"
-                              size="sm"
-                              value={color}
-                              onChange={(e) => {
-                                setColor(e.target.value)
-                              }}
-                            />
-                            <FormHelperText color={tertiaryText}>
-                              Include '#'
-                            </FormHelperText>
-                          </FormControl>
-                        </PopoverBody>
-                      </PopoverContent>
-                    </Popover>
-                  </FormControl>
-                </HStack>
-                <Controller
-                  name="tags"
-                  control={control}
-                  render={({
-                    field: { onChange, value, name },
-                    fieldState: { error },
-                  }) => (
-                    <FormControl isInvalid={error}>
-                      <FormLabel>Tags</FormLabel>
-                      <CreatableSelect
-                        isMulti
-                        name={name}
-                        value={value}
-                        onChange={onChange}
-                        placeholder="Select or create tags"
-                        options={tags?.map((tag) => ({
-                          value: tag?.id,
-                          label: tag?.name,
-                        }))}
-                        // display a modal to create a new tag onCreateOption
-                        onCreateOption={(tag) => {
-                          setNewTag(tag)
-                          onNewTagModalOpen()
-                        }}
-                      />
-                      <FormHelperText pb={2} boxShadow="none">
-                        Manage tags in settings
+                      <FormErrorMessage>
+                        {errors.name && errors.name.message}
+                      </FormErrorMessage>
+                    </FormControl>{' '}
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Category</FormLabel>
+                      <Select
+                        id="category"
+                        variant={inputVariant}
+                        placeholder="Select Category"
+                        {...register('category')}
+                      >
+                        {userCategories?.map((value, index) => (
+                          <option key={index} value={value} name="category">
+                            {value}
+                          </option>
+                        ))}
+                      </Select>
+                      <FormHelperText>
+                        Edit categories in settings
                       </FormHelperText>
                     </FormControl>
-                  )}
-                />
-              </VStack>
-            </Card>
-            <Divider />
-            <Card w="100%">
-              <VStack align="start" spacing={4}>
-                <Heading as="h2" size="sm" color={secondaryHeading}>
-                  Expense
-                </Heading>
-                <HStack w="100%" spacing={3}>
-                  <FormControl isInvalid={errors.cost}>
-                    <FormLabel color={secondaryText}>
-                      Cost{' '}
-                      <Text display="inline-block" color="red.500">
-                        *
-                      </Text>
-                    </FormLabel>
-                    <HStack>
+                  </HStack>
+                  <HStack w="100%" spacing={3} align="start">
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Website</FormLabel>
                       <InputGroup>
                         <InputLeftAddon
-                          children={subscriptionCurrency?.symbol}
+                          children="https://"
                           bg={inputBorder}
                           color={secondaryText}
                         />
                         <Input
-                          id="cost"
-                          isInvalid={errors.cost}
-                          {...register('cost', {
-                            required: 'Cost is required',
-                          })}
                           variant={inputVariant}
-                          inputMode="decimal"
-                          type="number"
-                          placeholder="1.99"
-                          step="0.01"
-                        ></Input>
-                      </InputGroup>
-                      <Button
-                        onClick={onCurrencyModalOpen}
-                        pl={5}
-                        pr={2}
-                        variant="outline"
-                      >
-                        <Avatar
-                          src={`/flags/${subscriptionCurrency?.cc.toLocaleLowerCase()}.svg`}
-                          size="2xs"
-                          mr={2}
+                          name="website"
+                          placeholder="netflix.com"
+                          textTransform="lowercase"
+                          {...register('website')}
                         />
-                        <Text
-                          fontSize="sm"
-                          mr={4}
-                        >{`${subscriptionCurrency?.cc}`}</Text>
-                      </Button>
-                    </HStack>
-                    <FormErrorMessage>
-                      {errors.cost && errors.cost.message}
-                    </FormErrorMessage>
-                  </FormControl>
-                  <FormControl isInvalid={errors.is_recurring}>
-                    <FormLabel color={secondaryText}>
-                      Expense Type
-                      <Text display="inline-block" color="red.500">
-                        *
-                      </Text>
-                    </FormLabel>
-                    <Select
-                      id="is_recurring"
-                      {...register('is_recurring', {
-                        required: 'Expense type is required',
-                      })}
-                      variant={inputVariant}
-                      placeholder="Select expense type"
-                    >
-                      <option value="recurring" name="is_recurring">
-                        Recurring
-                      </option>
-                      <option value="one time" name="is_recurring">
-                        One time
-                      </option>
-                    </Select>
-                    <FormErrorMessage>
-                      {errors.is_recurring && errors.is_recurring.message}
-                    </FormErrorMessage>
-                  </FormControl>
-                </HStack>
-                <Divider />
-                <Heading as="h2" size="sm" color={secondaryHeading}>
-                  Billing
-                </Heading>
-                {isRecurring && (
-                  <Stack direction={['column', 'row']} w="100%" spacing={3}>
-                    <FormControl isInvalid={errors?.billing_freq}>
-                      <FormLabel color={secondaryText}>Period</FormLabel>
-                      <HStack>
-                        <Text fontSize="sm" minW="max-content">
-                          Every:
+                      </InputGroup>
+                    </FormControl>
+                    <FormControl isInvalid={errors.project_id}>
+                      <FormLabel color={secondaryText}>
+                        Project{' '}
+                        <Text display="inline-block" color="red.500">
+                          *
                         </Text>
-                        <NumberInput>
-                          <NumberInputField
-                            id="billing_freq"
-                            variant={inputVariant}
-                            {...register('billing_freq', {
-                              min: {
-                                value: 1,
-                                message: 'Min value is 1',
-                              },
-                              max: {
-                                value: 500,
-                                message: 'Max value is 500',
-                              },
-                              shouldUnregister: true,
-                              required: 'Billing frequency is required',
-                            })}
-                          />
-                          <NumberInputStepper>
-                            <NumberIncrementStepper />
-                            <NumberDecrementStepper />
-                          </NumberInputStepper>
-                        </NumberInput>
-                        <Select
-                          minW="120px"
-                          variant={inputVariant}
-                          {...register('billing_range', {
-                            shouldUnregister: true,
-                          })}
-                        >
-                          <option value="day">
-                            {enteredFreq > 1 ? 'Days' : 'Day'}
+                      </FormLabel>
+                      <Select
+                        id="project"
+                        {...register('project_id', {
+                          required: 'Project is required',
+                        })}
+                        variant="filled"
+                        placeholder="Select a project"
+                      >
+                        {projects?.map((project) => (
+                          <option
+                            key={project.id}
+                            value={project.id}
+                            name="project"
+                          >
+                            {project.name}
                           </option>
-                          <option value="week">
-                            {enteredFreq > 1 ? 'Weeks' : 'Week'}
-                          </option>
-                          <option value="month">
-                            {enteredFreq > 1 ? 'Months' : 'Month'}
-                          </option>
-                          <option value="year">
-                            {enteredFreq > 1 ? 'Years' : 'Year'}
-                          </option>
-                        </Select>
-                      </HStack>
+                        ))}
+                      </Select>
                       <FormErrorMessage>
-                        {errors.billing_freq && errors.billing_freq.message}
+                        {errors.project_id && errors.project_id.message}
                       </FormErrorMessage>
                     </FormControl>
+                  </HStack>
+                  <HStack w="100%" spacing={3} align="start">
+                    <VStack w="100%" align="start">
+                      <Text
+                        as="label"
+                        display="block"
+                        fontWeight="500"
+                        fontSize="md"
+                        color={secondaryText}
+                        mb={2}
+                      >
+                        Custom Icon
+                      </Text>
+                      <SubsIconUpload setCustomIcon={setCustomIcon} />
+                      <Text fontSize="sm" color="gray.600">
+                        Icon from website is used by default
+                      </Text>
+                    </VStack>
                     <FormControl>
-                      <FormLabel color={secondaryText}>Next Payment</FormLabel>
-                      <InputGroup>
-                        <Input
-                          id="nextPaymentDate"
-                          variant={inputVariant}
-                          type="date"
-                          min={dayjs().format('YYYY-MM-DD')}
-                          {...register('nextPaymentDate', {
-                            shouldUnregister: true,
-                          })}
-                        />
-                      </InputGroup>
-                    </FormControl>
-                  </Stack>
-                )}
-                {isRecurring && (
-                  <Accordion allowToggle w="100%">
-                    <AccordionItem>
-                      <AccordionButton>
-                        <HStack w="100%" justify="center">
-                          <Text color="blue.600">Advanced Options</Text>
-                          <AccordionIcon color="blue.600" />
-                        </HStack>
-                      </AccordionButton>
-                      <AccordionPanel px={0}>
-                        <HStack align="start" spacing={3} w="100%">
-                          <FormControl isInvalid={errors.initialPaymentDate}>
-                            <FormLabel color={secondaryText}>
-                              First Payment
-                            </FormLabel>
-                            <InputGroup>
-                              <Input
-                                id="initialPaymentDate"
-                                variant={inputVariant}
-                                type="date"
-                                name="initialPaymentDate"
-                                {...register('initialPaymentDate', {
-                                  shouldUnregister: true,
-                                })}
-                              />
-                            </InputGroup>
-                            <FormErrorMessage>
-                              {errors.initialPaymentDate &&
-                                errors.initialPaymentDate.message}
-                            </FormErrorMessage>
-                          </FormControl>
-                          <FormControl isInvalid={errors.initialPaymentDate}>
-                            <FormLabel color={secondaryText}>
-                              End Date
-                            </FormLabel>
-                            <InputGroup>
-                              <Input
-                                id="end_date"
-                                variant={inputVariant}
-                                type="date"
-                                name="end_date"
-                                {...register('end_date', {
-                                  shouldUnregister: true,
-                                })}
-                              />
-                            </InputGroup>
-                            <FormHelperText>
-                              Subscription will be automatically moved to
-                              inactive on the chosen date
-                            </FormHelperText>
-                            <FormErrorMessage>
-                              {errors.end_date && errors.end_date.message}
-                            </FormErrorMessage>
-                          </FormControl>
-                        </HStack>
-                        <HStack align="start" spacing={3} w="100%">
-                          <FormControl isInvalid={errors.renewal_date}>
-                            <FormLabel color={secondaryText}>
-                              Renewal Date
-                            </FormLabel>
-                            <InputGroup>
-                              <Input
-                                id="renewal_date"
-                                variant={inputVariant}
-                                type="date"
-                                name="renewal_date"
-                                {...register('renewal_date', {
-                                  shouldUnregister: true,
-                                })}
-                              />
-                            </InputGroup>
-                            <FormHelperText>
-                              Enter a renewal date when the service contract is
-                              renewed on different date than the payment dates,
-                              i.e. insurance policies.
-                            </FormHelperText>
-                            <FormErrorMessage>
-                              {errors.renewal_date &&
-                                errors.renewal_date.message}
-                            </FormErrorMessage>
-                          </FormControl>
-                        </HStack>
-                      </AccordionPanel>
-                    </AccordionItem>
-                  </Accordion>
-                )}
-                <HStack w="100%" spacing={3}>
-                  {!isRecurring && (
-                    <>
-                      <FormControl isInvalid={errors.initialPaymentDate}>
-                        <FormLabel color={secondaryText}>
-                          Paid on{' '}
-                          <Text display="inline-block" color="red.500">
-                            *
-                          </Text>
-                        </FormLabel>
-                        <InputGroup>
-                          <Input
-                            id="one_time_paid_date"
-                            variant={inputVariant}
-                            type="date"
-                            name="one_time_paid_date"
-                            {...register('one_time_paid_date', {
-                              shouldUnregister: true,
-                              required: 'Payment Date is required',
-                            })}
+                      <FormLabel color={secondaryText}>Color</FormLabel>
+                      <Popover variant="picker" isLazy>
+                        <PopoverTrigger>
+                          <Button
+                            aria-label={color}
+                            background={
+                              colors.includes(color) ? `${color}.500` : color
+                            }
+                            height="32px"
+                            width="32px"
+                            padding={0}
+                            minWidth="unset"
+                            borderRadius={3}
+                            border="2px solid"
+                            borderColor="gray.400"
                           />
+                        </PopoverTrigger>
+                        <PopoverContent width="170px">
+                          <PopoverArrow bg={color} />
+                          <PopoverCloseButton color="white" />
+                          <PopoverHeader
+                            height="100px"
+                            backgroundColor={
+                              colors.includes(color) ? `${color}.500` : color
+                            }
+                            borderTopLeftRadius={5}
+                            borderTopRightRadius={5}
+                            color={
+                              colors.includes(color)
+                                ? colorContrast(colorsHex[color], 'y')
+                                : colorContrast(color, 'y')
+                            }
+                          >
+                            <Center height="100%">{color}</Center>
+                          </PopoverHeader>
+                          <PopoverBody height="140px">
+                            <SimpleGrid columns={5} spacing={2}>
+                              {colors.map((c) => (
+                                <Button
+                                  key={c}
+                                  aria-label={c}
+                                  background={`${c}.500`}
+                                  height="22px"
+                                  width="22px"
+                                  padding={0}
+                                  minWidth="unset"
+                                  borderRadius={3}
+                                  border="1.6px solid"
+                                  borderColor={inputBorder}
+                                  _hover={{ background: `${c}.700` }}
+                                  onClick={() => {
+                                    setColor(c)
+                                  }}
+                                ></Button>
+                              ))}
+                            </SimpleGrid>
+                            <FormControl>
+                              <Input
+                                maxLength={7}
+                                borderRadius={3}
+                                marginTop={3}
+                                placeholder="#EAEAEA"
+                                size="sm"
+                                value={color}
+                                onChange={(e) => {
+                                  setColor(e.target.value)
+                                }}
+                              />
+                              <FormHelperText color={tertiaryText}>
+                                Include '#'
+                              </FormHelperText>
+                            </FormControl>
+                          </PopoverBody>
+                        </PopoverContent>
+                      </Popover>
+                    </FormControl>
+                  </HStack>
+                  <Controller
+                    name="tags"
+                    control={control}
+                    render={({
+                      field: { onChange, value, name },
+                      fieldState: { error },
+                    }) => (
+                      <FormControl isInvalid={error}>
+                        <FormLabel>Tags</FormLabel>
+                        <CreatableSelect
+                          isMulti
+                          name={name}
+                          value={value}
+                          onChange={onChange}
+                          placeholder="Select or create tags"
+                          options={tags?.map((tag) => ({
+                            value: tag?.id,
+                            label: tag?.name,
+                          }))}
+                          // display a modal to create a new tag onCreateOption
+                          onCreateOption={(tag) => {
+                            setNewTag(tag)
+                            onNewTagModalOpen()
+                          }}
+                        />
+                        <FormHelperText pb={2} boxShadow="none">
+                          Manage tags in settings
+                        </FormHelperText>
+                      </FormControl>
+                    )}
+                  />
+                </VStack>
+              </Card>
+              <Divider />
+              <Card w="100%">
+                <VStack align="start" spacing={4}>
+                  <Heading as="h2" size="sm" color={secondaryHeading}>
+                    Expense
+                  </Heading>
+                  <HStack w="100%" spacing={3}>
+                    <FormControl isInvalid={errors.cost}>
+                      <FormLabel color={secondaryText}>
+                        Cost{' '}
+                        <Text display="inline-block" color="red.500">
+                          *
+                        </Text>
+                      </FormLabel>
+                      <HStack>
+                        <InputGroup>
+                          <InputLeftAddon
+                            children={subscriptionCurrency?.symbol}
+                            bg={inputBorder}
+                            color={secondaryText}
+                          />
+                          <Input
+                            id="cost"
+                            isInvalid={errors.cost}
+                            {...register('cost', {
+                              required: 'Cost is required',
+                            })}
+                            variant={inputVariant}
+                            inputMode="decimal"
+                            type="number"
+                            placeholder="1.99"
+                            step="0.01"
+                          ></Input>
                         </InputGroup>
+                        <Button
+                          onClick={onCurrencyModalOpen}
+                          pl={5}
+                          pr={2}
+                          variant="outline"
+                        >
+                          <Avatar
+                            src={`/flags/${subscriptionCurrency?.cc.toLocaleLowerCase()}.svg`}
+                            size="2xs"
+                            mr={2}
+                          />
+                          <Text
+                            fontSize="sm"
+                            mr={4}
+                          >{`${subscriptionCurrency?.cc}`}</Text>
+                        </Button>
+                      </HStack>
+                      <FormErrorMessage>
+                        {errors.cost && errors.cost.message}
+                      </FormErrorMessage>
+                    </FormControl>
+                    <FormControl isInvalid={errors.is_recurring}>
+                      <FormLabel color={secondaryText}>
+                        Expense Type
+                        <Text display="inline-block" color="red.500">
+                          *
+                        </Text>
+                      </FormLabel>
+                      <Select
+                        id="is_recurring"
+                        {...register('is_recurring', {
+                          required: 'Expense type is required',
+                        })}
+                        variant={inputVariant}
+                        placeholder="Select expense type"
+                      >
+                        <option value="recurring" name="is_recurring">
+                          Recurring
+                        </option>
+                        <option value="one time" name="is_recurring">
+                          One time
+                        </option>
+                      </Select>
+                      <FormErrorMessage>
+                        {errors.is_recurring && errors.is_recurring.message}
+                      </FormErrorMessage>
+                    </FormControl>
+                  </HStack>
+                  <Divider />
+                  <Heading as="h2" size="sm" color={secondaryHeading}>
+                    Billing
+                  </Heading>
+                  {isRecurring && (
+                    <Stack direction={['column', 'row']} w="100%" spacing={3}>
+                      <FormControl isInvalid={errors?.billing_freq}>
+                        <FormLabel color={secondaryText}>Period</FormLabel>
+                        <HStack>
+                          <Text fontSize="sm" minW="max-content">
+                            Every:
+                          </Text>
+                          <NumberInput>
+                            <NumberInputField
+                              id="billing_freq"
+                              variant={inputVariant}
+                              {...register('billing_freq', {
+                                min: {
+                                  value: 1,
+                                  message: 'Min value is 1',
+                                },
+                                max: {
+                                  value: 500,
+                                  message: 'Max value is 500',
+                                },
+                                shouldUnregister: true,
+                                required: 'Billing frequency is required',
+                              })}
+                            />
+                            <NumberInputStepper>
+                              <NumberIncrementStepper />
+                              <NumberDecrementStepper />
+                            </NumberInputStepper>
+                          </NumberInput>
+                          <Select
+                            minW="120px"
+                            variant={inputVariant}
+                            {...register('billing_range', {
+                              shouldUnregister: true,
+                            })}
+                          >
+                            <option value="day">
+                              {enteredFreq > 1 ? 'Days' : 'Day'}
+                            </option>
+                            <option value="week">
+                              {enteredFreq > 1 ? 'Weeks' : 'Week'}
+                            </option>
+                            <option value="month">
+                              {enteredFreq > 1 ? 'Months' : 'Month'}
+                            </option>
+                            <option value="year">
+                              {enteredFreq > 1 ? 'Years' : 'Year'}
+                            </option>
+                          </Select>
+                        </HStack>
                         <FormErrorMessage>
-                          {errors.initialPaymentDate &&
-                            errors.initialPaymentDate.message}
+                          {errors.billing_freq && errors.billing_freq.message}
                         </FormErrorMessage>
                       </FormControl>
                       <FormControl>
                         <FormLabel color={secondaryText}>
-                          Refund Deadline
+                          Next Payment
                         </FormLabel>
                         <InputGroup>
                           <Input
-                            id="refund_deadline"
+                            id="nextPaymentDate"
                             variant={inputVariant}
                             type="date"
                             min={dayjs().format('YYYY-MM-DD')}
-                            name="refund_deadline"
-                            {...register('refund_deadline', {
+                            {...register('nextPaymentDate', {
                               shouldUnregister: true,
                             })}
                           />
                         </InputGroup>
                       </FormControl>
-                    </>
+                    </Stack>
                   )}
-                </HStack>
-              </VStack>
-            </Card>
-            <Divider />
-            {isRecurring && (
+                  {isRecurring && (
+                    <Accordion allowToggle w="100%">
+                      <AccordionItem>
+                        <AccordionButton>
+                          <HStack w="100%" justify="center">
+                            <Text color="blue.600">Advanced Options</Text>
+                            <AccordionIcon color="blue.600" />
+                          </HStack>
+                        </AccordionButton>
+                        <AccordionPanel px={0}>
+                          <HStack align="start" spacing={3} w="100%">
+                            <FormControl isInvalid={errors.initialPaymentDate}>
+                              <FormLabel color={secondaryText}>
+                                First Payment
+                              </FormLabel>
+                              <InputGroup>
+                                <Input
+                                  id="initialPaymentDate"
+                                  variant={inputVariant}
+                                  type="date"
+                                  name="initialPaymentDate"
+                                  {...register('initialPaymentDate', {
+                                    shouldUnregister: true,
+                                  })}
+                                />
+                              </InputGroup>
+                              <FormErrorMessage>
+                                {errors.initialPaymentDate &&
+                                  errors.initialPaymentDate.message}
+                              </FormErrorMessage>
+                            </FormControl>
+                            <FormControl isInvalid={errors.initialPaymentDate}>
+                              <FormLabel color={secondaryText}>
+                                End Date
+                              </FormLabel>
+                              <InputGroup>
+                                <Input
+                                  id="end_date"
+                                  variant={inputVariant}
+                                  type="date"
+                                  name="end_date"
+                                  {...register('end_date', {
+                                    shouldUnregister: true,
+                                  })}
+                                />
+                              </InputGroup>
+                              <FormHelperText>
+                                Subscription will be automatically moved to
+                                inactive on the chosen date
+                              </FormHelperText>
+                              <FormErrorMessage>
+                                {errors.end_date && errors.end_date.message}
+                              </FormErrorMessage>
+                            </FormControl>
+                          </HStack>
+                          <HStack align="start" spacing={3} w="100%">
+                            <FormControl isInvalid={errors.renewal_date}>
+                              <FormLabel color={secondaryText}>
+                                Renewal Date
+                              </FormLabel>
+                              <InputGroup>
+                                <Input
+                                  id="renewal_date"
+                                  variant={inputVariant}
+                                  type="date"
+                                  name="renewal_date"
+                                  {...register('renewal_date', {
+                                    shouldUnregister: true,
+                                  })}
+                                />
+                              </InputGroup>
+                              <FormHelperText>
+                                Enter a renewal date when the service contract
+                                is renewed on different date than the payment
+                                dates, i.e. insurance policies.
+                              </FormHelperText>
+                              <FormErrorMessage>
+                                {errors.renewal_date &&
+                                  errors.renewal_date.message}
+                              </FormErrorMessage>
+                            </FormControl>
+                          </HStack>
+                        </AccordionPanel>
+                      </AccordionItem>
+                    </Accordion>
+                  )}
+                  <HStack w="100%" spacing={3}>
+                    {!isRecurring && (
+                      <>
+                        <FormControl isInvalid={errors.initialPaymentDate}>
+                          <FormLabel color={secondaryText}>
+                            Paid on{' '}
+                            <Text display="inline-block" color="red.500">
+                              *
+                            </Text>
+                          </FormLabel>
+                          <InputGroup>
+                            <Input
+                              id="one_time_paid_date"
+                              variant={inputVariant}
+                              type="date"
+                              name="one_time_paid_date"
+                              {...register('one_time_paid_date', {
+                                shouldUnregister: true,
+                                required: 'Payment Date is required',
+                              })}
+                            />
+                          </InputGroup>
+                          <FormErrorMessage>
+                            {errors.initialPaymentDate &&
+                              errors.initialPaymentDate.message}
+                          </FormErrorMessage>
+                        </FormControl>
+                        <FormControl>
+                          <FormLabel color={secondaryText}>
+                            Refund Deadline
+                          </FormLabel>
+                          <InputGroup>
+                            <Input
+                              id="refund_deadline"
+                              variant={inputVariant}
+                              type="date"
+                              min={dayjs().format('YYYY-MM-DD')}
+                              name="refund_deadline"
+                              {...register('refund_deadline', {
+                                shouldUnregister: true,
+                              })}
+                            />
+                          </InputGroup>
+                        </FormControl>
+                      </>
+                    )}
+                  </HStack>
+                </VStack>
+              </Card>
+              <Divider />
+              {isRecurring && (
+                <Card w="100%">
+                  <VStack align="start" spacing={3}>
+                    <VStack align="start">
+                      <Heading as="h2" size="sm" color={secondaryHeading}>
+                        Reminders
+                      </Heading>
+                      <Text fontSize="sm">
+                        Set up to 3 reminders - you must enter a next payment
+                        date
+                      </Text>
+                    </VStack>
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Reminder 1</FormLabel>
+                      <Select
+                        id="alert_1"
+                        isDisabled={!enteredNextPaymentDate}
+                        variant={inputVariant}
+                        {...register('alert_1', {
+                          shouldUnregister: true,
+                        })}
+                      >
+                        <option value={0}>None</option>
+                        <option value={1}>1 Day before</option>
+                        <option value={3}>3 Days before</option>
+                        <option value={5}>5 Days before</option>
+                        <option value={7}>7 Days before</option>
+                        <option value={10}>10 Days before</option>
+                      </Select>
+                      <FormHelperText>
+                        {alert1Date &&
+                          `Next alert on ${alert1Date.format('MMM DD, YYYY')}`}
+                      </FormHelperText>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Reminder 2</FormLabel>
+                      <Select
+                        id="alert_2"
+                        isDisabled={!enteredNextPaymentDate}
+                        variant={inputVariant}
+                        {...register('alert_2', {
+                          shouldUnregister: true,
+                        })}
+                      >
+                        <option value={0}>None</option>
+                        <option value={1}>1 Day before</option>
+                        <option value={3}>3 Days before</option>
+                        <option value={5}>5 Days before</option>
+                        <option value={7}>7 Days before</option>
+                        <option value={10}>10 Days before</option>
+                      </Select>
+                      <FormHelperText>
+                        {alert2Date &&
+                          `Next alert on ${alert2Date.format('MMM DD, YYYY')}`}
+                      </FormHelperText>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Reminder 3</FormLabel>
+                      <Select
+                        id="alert_3"
+                        isDisabled={!enteredNextPaymentDate}
+                        variant={inputVariant}
+                        {...register('alert_3', {
+                          shouldUnregister: true,
+                        })}
+                      >
+                        <option value={0}>None</option>
+                        <option value={1}>1 Day before</option>
+                        <option value={3}>3 Days before</option>
+                        <option value={5}>5 Days before</option>
+                        <option value={7}>7 Days before</option>
+                        <option value={10}>10 Days before</option>
+                      </Select>
+                      <FormHelperText>
+                        {alert3Date &&
+                          `Next alert on ${alert3Date.format('MMM DD, YYYY')}`}
+                      </FormHelperText>
+                    </FormControl>
+                  </VStack>
+                </Card>
+              )}
+              {!isRecurring && (
+                <Card>
+                  <VStack align="start" spacing={3}>
+                    <VStack align="start">
+                      <Heading as="h2" size="sm" color={secondaryHeading}>
+                        Reminders
+                      </Heading>
+                      <Text>
+                        Set up to 3 reminders - you must enter a refund deadline
+                        date
+                      </Text>
+                    </VStack>
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Reminder 1</FormLabel>
+                      <Select
+                        id="refund_alert_1"
+                        isDisabled={!enteredRefundDate}
+                        variant={inputVariant}
+                        {...register('refund_alert_1', {
+                          shouldUnregister: true,
+                        })}
+                      >
+                        <option value={0}>None</option>
+                        <option value={1}>1 Day before</option>
+                        <option value={3}>3 Days before</option>
+                        <option value={5}>5 Days before</option>
+                        <option value={7}>7 Days before</option>
+                        <option value={10}>10 Days before</option>
+                      </Select>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Reminder 2</FormLabel>
+                      <Select
+                        id="refund_alert_2"
+                        isDisabled={!enteredRefundDate}
+                        variant={inputVariant}
+                        {...register('refund_alert_2', {
+                          shouldUnregister: true,
+                        })}
+                      >
+                        <option value={0}>None</option>
+                        <option value={1}>1 Day before</option>
+                        <option value={3}>3 Days before</option>
+                        <option value={5}>5 Days before</option>
+                        <option value={7}>7 Days before</option>
+                        <option value={10}>10 Days before</option>
+                      </Select>
+                    </FormControl>
+                    <FormControl>
+                      <FormLabel color={secondaryText}>Reminder 3</FormLabel>
+                      <Select
+                        id="refund_alert_3"
+                        isDisabled={!enteredRefundDate}
+                        variant={inputVariant}
+                        {...register('refund_alert_3', {
+                          shouldUnregister: true,
+                        })}
+                      >
+                        <option value={0}>None</option>
+                        <option value={1}>1 Day before</option>
+                        <option value={3}>3 Days before</option>
+                        <option value={5}>5 Days before</option>
+                        <option value={7}>7 Days before</option>
+                        <option value={10}>10 Days before</option>
+                      </Select>
+                    </FormControl>
+                  </VStack>
+                </Card>
+              )}
+              <Divider />
               <Card w="100%">
                 <VStack align="start" spacing={3}>
-                  <VStack align="start">
-                    <Heading as="h2" size="sm" color={secondaryHeading}>
-                      Reminders
-                    </Heading>
-                    <Text fontSize="sm">
-                      Set up to 3 reminders - you must enter a next payment date
-                    </Text>
-                  </VStack>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Reminder 1</FormLabel>
-                    <Select
-                      id="alert_1"
-                      isDisabled={!enteredNextPaymentDate}
-                      variant={inputVariant}
-                      {...register('alert_1', {
-                        shouldUnregister: true,
-                      })}
-                    >
-                      <option value={0}>None</option>
-                      <option value={1}>1 Day before</option>
-                      <option value={3}>3 Days before</option>
-                      <option value={5}>5 Days before</option>
-                      <option value={7}>7 Days before</option>
-                      <option value={10}>10 Days before</option>
-                    </Select>
-                    <FormHelperText>
-                      {alert1Date &&
-                        `Next alert on ${alert1Date.format('MMM DD, YYYY')}`}
-                    </FormHelperText>
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Reminder 2</FormLabel>
-                    <Select
-                      id="alert_2"
-                      isDisabled={!enteredNextPaymentDate}
-                      variant={inputVariant}
-                      {...register('alert_2', {
-                        shouldUnregister: true,
-                      })}
-                    >
-                      <option value={0}>None</option>
-                      <option value={1}>1 Day before</option>
-                      <option value={3}>3 Days before</option>
-                      <option value={5}>5 Days before</option>
-                      <option value={7}>7 Days before</option>
-                      <option value={10}>10 Days before</option>
-                    </Select>
-                    <FormHelperText>
-                      {alert2Date &&
-                        `Next alert on ${alert2Date.format('MMM DD, YYYY')}`}
-                    </FormHelperText>
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Reminder 3</FormLabel>
-                    <Select
-                      id="alert_3"
-                      isDisabled={!enteredNextPaymentDate}
-                      variant={inputVariant}
-                      {...register('alert_3', {
-                        shouldUnregister: true,
-                      })}
-                    >
-                      <option value={0}>None</option>
-                      <option value={1}>1 Day before</option>
-                      <option value={3}>3 Days before</option>
-                      <option value={5}>5 Days before</option>
-                      <option value={7}>7 Days before</option>
-                      <option value={10}>10 Days before</option>
-                    </Select>
-                    <FormHelperText>
-                      {alert3Date &&
-                        `Next alert on ${alert3Date.format('MMM DD, YYYY')}`}
-                    </FormHelperText>
-                  </FormControl>
+                  <Heading as="h2" size="sm" color={secondaryHeading}>
+                    Additional Information
+                  </Heading>
+                  {paymentMethods?.length > 0 && (
+                    <FormControl isInvalid={errors.payment_method_id}>
+                      <FormLabel color={secondaryText}>
+                        Payment Method{' '}
+                      </FormLabel>
+                      <Select
+                        id="payment_method_id"
+                        {...register('payment_method_id')}
+                        variant="filled"
+                        placeholder="Select a Payment Method"
+                      >
+                        {paymentMethods?.map((item) => (
+                          <option
+                            key={item.id}
+                            value={item.id}
+                            name="Payment Method"
+                          >
+                            {item.name}
+                          </option>
+                        ))}
+                      </Select>
+                      <FormErrorMessage>
+                        {errors.payment_method_id &&
+                          errors.payment_method_id.message}
+                      </FormErrorMessage>
+                      <FormHelperText>
+                        Edit Payment Methods in settings
+                      </FormHelperText>
+                    </FormControl>
+                  )}
                 </VStack>
               </Card>
-            )}
-            {!isRecurring && (
-              <Card>
-                <VStack align="start" spacing={3}>
-                  <VStack align="start">
-                    <Heading as="h2" size="sm" color={secondaryHeading}>
-                      Reminders
-                    </Heading>
-                    <Text>
-                      Set up to 3 reminders - you must enter a refund deadline
-                      date
-                    </Text>
-                  </VStack>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Reminder 1</FormLabel>
-                    <Select
-                      id="refund_alert_1"
-                      isDisabled={!enteredRefundDate}
-                      variant={inputVariant}
-                      {...register('refund_alert_1', {
-                        shouldUnregister: true,
-                      })}
-                    >
-                      <option value={0}>None</option>
-                      <option value={1}>1 Day before</option>
-                      <option value={3}>3 Days before</option>
-                      <option value={5}>5 Days before</option>
-                      <option value={7}>7 Days before</option>
-                      <option value={10}>10 Days before</option>
-                    </Select>
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Reminder 2</FormLabel>
-                    <Select
-                      id="refund_alert_2"
-                      isDisabled={!enteredRefundDate}
-                      variant={inputVariant}
-                      {...register('refund_alert_2', {
-                        shouldUnregister: true,
-                      })}
-                    >
-                      <option value={0}>None</option>
-                      <option value={1}>1 Day before</option>
-                      <option value={3}>3 Days before</option>
-                      <option value={5}>5 Days before</option>
-                      <option value={7}>7 Days before</option>
-                      <option value={10}>10 Days before</option>
-                    </Select>
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel color={secondaryText}>Reminder 3</FormLabel>
-                    <Select
-                      id="refund_alert_3"
-                      isDisabled={!enteredRefundDate}
-                      variant={inputVariant}
-                      {...register('refund_alert_3', {
-                        shouldUnregister: true,
-                      })}
-                    >
-                      <option value={0}>None</option>
-                      <option value={1}>1 Day before</option>
-                      <option value={3}>3 Days before</option>
-                      <option value={5}>5 Days before</option>
-                      <option value={7}>7 Days before</option>
-                      <option value={10}>10 Days before</option>
-                    </Select>
-                  </FormControl>
-                </VStack>
-              </Card>
-            )}
-            <Divider />
-            <Card w="100%">
-              <VStack align="start" spacing={3}>
-                <Heading as="h2" size="sm" color={secondaryHeading}>
-                  Additional Information
-                </Heading>
-                {paymentMethods?.length > 0 && (
-                  <FormControl isInvalid={errors.payment_method_id}>
-                    <FormLabel color={secondaryText}>Payment Method </FormLabel>
-                    <Select
-                      id="payment_method_id"
-                      {...register('payment_method_id')}
-                      variant="filled"
-                      placeholder="Select a Payment Method"
-                    >
-                      {paymentMethods?.map((item) => (
-                        <option
-                          key={item.id}
-                          value={item.id}
-                          name="Payment Method"
-                        >
-                          {item.name}
-                        </option>
-                      ))}
-                    </Select>
-                    <FormErrorMessage>
-                      {errors.payment_method_id &&
-                        errors.payment_method_id.message}
-                    </FormErrorMessage>
-                    <FormHelperText>
-                      Edit Payment Methods in settings
-                    </FormHelperText>
-                  </FormControl>
-                )}
-              </VStack>
-            </Card>
-            <Box p={2} w="100%" pos="fixed" bottom={0} bg={bg}>
-              <Button
-                type="submit"
-                isLoading={isLoading}
-                width="100%"
-                size="md"
-                colorScheme="gray"
-                bg={buttonBg}
-                color={'whiteAlpha.900'}
-                _hover={{ background: buttonHover }}
-              >
-                Add Subscription
-              </Button>
-            </Box>
-          </VStack>
-        </Stack>
-        <Modal
-          isOpen={isCurrencyModalOpen}
-          onClose={onCurrencyModalClose}
-          scrollBehavior="inside"
-          h={'100vh'}
-        >
-          <ModalOverlay />
-          <ModalContent borderRadius={12}>
-            <ModalHeader textAlign="center" borderRadius={12} pt={6}>
-              Change Default Currency
-              <Box />
-              <ModalCloseButton />
-            </ModalHeader>
-            <Divider />
-            <ModalBody bg={modalBg} pt={0}>
-              <CurrenciesList selectedCurrency={updateDefaultCurrency} />
-            </ModalBody>
-            <ModalFooter bg={modalBg} borderBottomRadius={12} />
-          </ModalContent>
-        </Modal>
-        <Modal isOpen={isNewTagModalOpen} onClose={onNewTagModalClose}>
-          <ModalOverlay />
-          <ModalContent borderRadius={12}>
-            <ModalHeader textAlign="center" borderRadius={12} pt={6}>
-              Create new tag
-              <ModalCloseButton />
-            </ModalHeader>
-            <Divider />
-            <ModalBody bg={modalBg} pt={0}>
-              <NewTagForm tag={newTag} onModalClose={onNewTagModalClose} />
-            </ModalBody>
-            <ModalFooter py={1} bg={modalBg} borderBottomRadius={12} />
-          </ModalContent>
-        </Modal>
-      </VStack>
+              <Box p={2} w="100%" pos="fixed" bottom={0} bg={bg}>
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  width="100%"
+                  size="md"
+                  colorScheme="gray"
+                  bg={buttonBg}
+                  color={'whiteAlpha.900'}
+                  _hover={{ background: buttonHover }}
+                >
+                  Add Subscription
+                </Button>
+              </Box>
+            </VStack>
+          </Stack>
+          <Modal
+            isOpen={isCurrencyModalOpen}
+            onClose={onCurrencyModalClose}
+            scrollBehavior="inside"
+            h={'100vh'}
+          >
+            <ModalOverlay />
+            <ModalContent borderRadius={12}>
+              <ModalHeader textAlign="center" borderRadius={12} pt={6}>
+                Change Default Currency
+                <Box />
+                <ModalCloseButton />
+              </ModalHeader>
+              <Divider />
+              <ModalBody bg={modalBg} pt={0}>
+                <CurrenciesList selectedCurrency={updateDefaultCurrency} />
+              </ModalBody>
+              <ModalFooter bg={modalBg} borderBottomRadius={12} />
+            </ModalContent>
+          </Modal>
+          <Modal isOpen={isNewTagModalOpen} onClose={onNewTagModalClose}>
+            <ModalOverlay />
+            <ModalContent borderRadius={12}>
+              <ModalHeader textAlign="center" borderRadius={12} pt={6}>
+                Create new tag
+                <ModalCloseButton />
+              </ModalHeader>
+              <Divider />
+              <ModalBody bg={modalBg} pt={0}>
+                <NewTagForm tag={newTag} onModalClose={onNewTagModalClose} />
+              </ModalBody>
+              <ModalFooter py={1} bg={modalBg} borderBottomRadius={12} />
+            </ModalContent>
+          </Modal>
+        </VStack>
+      ) : (
+        <VStack h="550px" justify="center">
+          <CircularProgress isIndeterminate />
+        </VStack>
+      )}
     </>
   )
 }
