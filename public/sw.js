@@ -5,13 +5,13 @@ console.log('Background script loaded')
 // Listener for messages from Popup
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   switch (request.action) {
-    case 'loginWithGoogle': {
-      // const url = 'https://web.subly.app/chrome-extension-login'
+    case 'navigateToLogin': {
+      const url = 'https://web.subly.app/chrome-extension-login'
       // const url = 'http://localhost:3000/chrome-extension-login'
-      const url = request.payload.url
+      // const url = request.payload.url
 
       chrome.tabs.create({ url: url, active: true }, (tab) => {
-        chrome.tabs.onUpdated.addListener(setTokens)
+        // chrome.tabs.onUpdated.addListener(setTokens)
         sendResponse('Opened login tab')
       })
       break
@@ -36,15 +36,18 @@ chrome.runtime.onMessageExternal.addListener(function (
 
     console.log('request received ', request)
     // Save the session data
-    chrome.storage.local.set({ sessionData: request }, function () {
-      console.log('Session data saved')
-      // open popup
-    })
+    chrome.storage.local.set(
+      { sessionData: request.payload.session },
+      function () {
+        console.log('Session data saved')
+        // open popup
+      }
+    )
   }
 
   // Close the tab after getting the session data
   if (sender.tab.id) {
-    console.log('Closing tab...')
+    // console.log('Closing tab...')
     // chrome.tabs.remove(sender.tab.id)
   }
   // }

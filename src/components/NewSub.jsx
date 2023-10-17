@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import useUserProfile from '../hooks/useUserProfile'
 import useUserSettings from '../hooks/useUserSettings'
 import useUserCategories from '../hooks/useUserCategories'
@@ -23,7 +23,7 @@ import {
   FormHelperText,
   Heading,
   HStack,
-  IconButton,
+  Icon,
   InputGroup,
   InputLeftAddon,
   Input,
@@ -48,7 +48,6 @@ import {
   useToast,
   useColorModeValue,
   Divider,
-  Textarea,
   Stack,
   useDisclosure,
   Accordion,
@@ -63,7 +62,7 @@ import {
   NumberInputStepper,
   CircularProgress,
 } from '@chakra-ui/react'
-import { BiArrowBack } from 'react-icons/bi'
+import { BiBell, BiReceipt, BiMoney } from 'react-icons/bi'
 import CardPreview from '../components/CardPreview'
 import { isValidUrl } from '../utils/isValidUrl'
 import { colorContrast } from '../utils/colorContrast'
@@ -71,10 +70,12 @@ import CurrenciesList from '../components/CurrenciesList'
 import { getAbbreviation } from '../utils/getAbbreviation'
 import SubsIconUpload from '../components/SubsIconUpload'
 import NewTagForm from '../components/NewTagForm'
-import SetUserData from './SetUserData'
 import SetProjectsData from './SetProjectsData'
+import getLogo from '../utils/getLogo'
+import SetUserData from './SetUserData'
+import PageHeader from './PageHeader'
 
-export default function NewSubscription({ subQuery }) {
+export default function NewSubscription() {
   const supabaseClient = useSupabaseClient()
 
   const [isLoading, setIsLoading] = useState(false)
@@ -140,10 +141,11 @@ export default function NewSubscription({ subQuery }) {
     handleSubmit,
     watch,
     reset,
+    setValue,
     control,
     formState: { errors },
   } = useForm({
-    defaultValues: sub,
+    defaultValues: initialState,
   })
 
   // form input watch
@@ -159,6 +161,7 @@ export default function NewSubscription({ subQuery }) {
   const selectedAlert1 = watch('alert_1')
   const selectedAlert2 = watch('alert_2')
   const selectedAlert3 = watch('alert_3')
+  const selectedProject = watch('project_id')
 
   const updateDefaultCurrency = (currency) => {
     setSubscriptionCurrency(currency)
@@ -185,11 +188,9 @@ export default function NewSubscription({ subQuery }) {
     setTags(data)
   }
 
-  const [subscriptionCurrency, setSubscriptionCurrency] = useState({
-    cc: 'USD',
-    symbol: '$',
-    name: 'US Dollar',
-  })
+  const [subscriptionCurrency, setSubscriptionCurrency] = useState(
+    currentWorkspace?.currency
+  )
 
   const onSubmit = async (data) => {
     const newSub = {
@@ -215,8 +216,8 @@ export default function NewSubscription({ subQuery }) {
       initialPaymentDate:
         isRecurring && data.initialPaymentDate
           ? dayjs(data.initialPaymentDate).toISOString()
-          : data.refund_deadline
-          ? dayjs(data.refund_deadline).toISOString()
+          : !isRecurring && data.paid_on_date
+          ? dayjs(data.paid_on_date).toISOString()
           : null,
       end_date: data.end_date ? dayjs(data.end_date).toISOString() : null,
       renewal_date: data.renewal_date
@@ -313,8 +314,6 @@ export default function NewSubscription({ subQuery }) {
 
       if (allSubsData) {
         setIsLoading(false)
-        // setSubscriptions(allSubsData)
-        // router.push('/home')
       }
     }
     if (subError) {
@@ -329,8 +328,41 @@ export default function NewSubscription({ subQuery }) {
     }
   }
 
-  const handleBack = () => {
-    // router.back()
+  // save new category
+  const saveNewCategory = async (newCategoryName) => {
+    try {
+      const updatedCategories = [...userCategories, newCategoryName].sort() // Sort the categories alphabetically
+
+      // Call the Supabase API to update the categories array in the workspace
+      const { data, error } = await supabaseClient
+        .from('workspaces')
+        .update({ categories: updatedCategories })
+        .eq('id', currentWorkspace.id)
+
+      if (error) {
+        console.error(error)
+        return null
+      }
+
+      // Show a success toast
+      toast({
+        title: 'Category saved',
+        status: 'info',
+        duration: 2000,
+        isClosable: true,
+      })
+
+      return updatedCategories // Return the sorted categories array
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: 'An error occurred, try again',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      })
+      return null
+    }
   }
 
   const [color, setColor] = useState(sub?.cardColor)
@@ -361,85 +393,66 @@ export default function NewSubscription({ subQuery }) {
 
   const [subLogo, setSubLogo] = useState(sub?.logo)
 
-  const getWebsiteLogo = async (url) => {
-    const logo = await fetch(`/api/utils/get-logo?website=${url}`)
-      .then((res) => res.json())
-      .then((res) => {
-        const { data, error } = res
-        if (error) {
-          return '/empty-states/light/17.svg'
-        }
-        if (data) {
-          return data
-        }
-      })
-    setSubLogo(logo)
+  // if errors object has any errors, display toast
+  const onError = () => {
+    toast({
+      title: 'Please fill all the required fields',
+      status: 'error',
+      duration: 3000,
+      isClosable: true,
+    })
   }
 
-  useEffect(() => {
-    // remove the http:// or https:// from the enteredWebsite string
-  }, [enteredWebsite])
+  // watch for changes in the website input to set the logo
+  const [debounceTimer, setDebounceTimer] = useState(null)
 
-  // use effecto use customIcon if customIcon exists
   useEffect(() => {
-    if (customIcon) {
-      setSubLogo(customIcon)
+    // Clear the previous timer if it exists
+    if (debounceTimer) {
+      clearTimeout(debounceTimer)
     }
-    if (enteredWebsite && !customIcon) {
-      const url = enteredWebsite?.replace(/(^\w+:|^)\/\//, '')
 
-      if (isValidUrl(`https://${url}`)) {
-        const logoUrl = new URL(`https://${url}`).hostname
-        if (!subLogo.includes('/popular-services/')) {
-          getWebsiteLogo(logoUrl)
+    const fetchLogo = async () => {
+      if (enteredWebsite && !customIcon) {
+        const url = enteredWebsite?.replace(/(^\w+:|^)\/\//, '')
+
+        if (isValidUrl(`https://${url}`)) {
+          const logoUrl = new URL(`https://${url}`).hostname
+          const logo = await getLogo(logoUrl)
+          setSubLogo(logo)
         }
       }
     }
-    if (!enteredWebsite && !customIcon) {
+
+    if (customIcon) {
+      setSubLogo(customIcon)
+    } else if (!enteredWebsite && !customIcon) {
       setSubLogo('/empty-states/light/17.svg')
+    } else {
+      // Set a new timer
+      const timer = setTimeout(() => {
+        fetchLogo()
+      }, 300) // 300ms delay
+
+      setDebounceTimer(timer)
+    }
+
+    // Cleanup on unmount or if the effect re-runs
+    return () => {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer)
+      }
     }
   }, [customIcon, enteredWebsite])
 
-  // useEffecto to get the subscription from router
+  // remove http:// or https:// from website input
   useEffect(() => {
-    if (subQuery) {
-      setSub({
-        ...subQuery,
-        is_recurring:
-          !subQuery?.billingPeriod === 'One time' ? 'one time' : 'recurring',
-      })
-      setSubLogo(subQuery.logo)
-      setColor(subQuery.cardColor ? subQuery.cardColor : 'white')
-    } else {
-      setSub(initialState)
-      setSubLogo('/empty-states/light/17.svg')
+    if (enteredWebsite?.startsWith('http://')) {
+      setValue('website', enteredWebsite?.replace('http://', ''))
+    } else if (enteredWebsite?.startsWith('https://')) {
+      setValue('website', enteredWebsite?.replace('https://', ''))
     }
-    reset({
-      ...subQuery,
-      is_recurring:
-        subQuery?.billingPeriod === 'One time' ? 'one time' : 'recurring',
-      billing_range: subQuery?.billing_range
-        ? subQuery?.billing_range
-        : 'month',
-      billing_freq: subQuery?.billing_freq ? subQuery?.billing_freq : 1,
-      project_id: currentProject?.id,
-      nextPaymentDate: subQuery?.nextPaymentDate
-        ? dayjs(subQuery?.nextPaymentDate).format('YYYY-MM-DD')
-        : null,
-      initialPaymentDate: subQuery?.initialPaymentDate
-        ? dayjs(subQuery?.initialPaymentDate).format('YYYY-MM-DD')
-        : null,
-      end_date: subQuery?.end_date
-        ? dayjs(subQuery?.end_date).format('YYYY-MM-DD')
-        : null,
-      refund_deadline: subQuery?.refund_deadline
-        ? dayjs(subQuery?.refund_deadline).format('YYYY-MM-DD')
-        : null,
-      payment_method_id: subQuery?.payment_method_id
-        ? subQuery?.payment_method_id
-        : null,
-    })
-  }, [])
+  }, [enteredWebsite, setValue])
 
   const [alert1Date, setAlert1Date] = useState(null)
   const [alert2Date, setAlert2Date] = useState(null)
@@ -514,27 +527,39 @@ export default function NewSubscription({ subQuery }) {
     }
   }, [currentWorkspace])
 
+  // Listen to project selection and set currentProject to it
+  useEffect(() => {
+    if (selectedProject) {
+      const findProject = projects?.find(
+        (project) => project?.id === parseInt(selectedProject)
+      )
+      setCurrentProject(findProject)
+    }
+  }, [selectedProject])
+
   return (
     <>
+      <SetUserData />
       <SetProjectsData />
       {currentWorkspace ? (
         <VStack justifyContent="start" maxW="fit-content" margin="auto">
-          <HStack py={3} align="center" justifyContent="start" w="100%">
-            <Heading as="h1" fontSize="18px">
-              Add subscription
-            </Heading>
-          </HStack>
+          <PageHeader
+            heading="New subscription"
+            primaryAction={handleSubmit(onSubmit, onError)}
+            primaryCTA="Add subscription"
+            isLoading={isLoading}
+          />
           <Stack
             direction={['column', 'column', 'row-reverse', 'row-reverse']}
             alignItems={['center', 'center', 'start', 'start']}
             justifyContent="center"
-            spacing={4}
+            spacing={6}
             pb="6vh"
             overflowX="hidden"
           >
-            <Box minW="sm" maxW="max-content">
-              <Heading size="xs" color={secondaryText} mb={2}>
-                Preview
+            <Box w="100%">
+              <Heading size="xs" color={tertiaryText} mb={1}>
+                Card preview
               </Heading>
               <CardPreview
                 title={enteredName}
@@ -552,17 +577,23 @@ export default function NewSubscription({ subQuery }) {
             </Box>
             <VStack
               as="form"
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={handleSubmit(onSubmit, onError)}
               maxW="xl"
-              spacing={4}
+              spacing={6}
             >
-              <Divider />
-              <Card w="100%">
-                <VStack align="start" spacing={4}>
-                  <Heading as="h2" size="sm" color={secondaryHeading}>
-                    General
-                  </Heading>
-                  <HStack w="100%" spacing={3} align="start">
+              <Card variant="outline" p={[4, 4, 6]} w="100%">
+                <VStack align="start" spacing={6}>
+                  <HStack>
+                    <Icon
+                      as={BiReceipt}
+                      color={secondaryHeading}
+                      fontSize="1.4rem"
+                    />
+                    <Heading as="h2" size="md" color={secondaryHeading}>
+                      General
+                    </Heading>
+                  </HStack>
+                  <HStack w="100%" spacing={4} align="start">
                     <FormControl isInvalid={errors.name}>
                       <FormLabel color={secondaryText}>
                         Name{' '}
@@ -595,27 +626,56 @@ export default function NewSubscription({ subQuery }) {
                       <FormErrorMessage>
                         {errors.name && errors.name.message}
                       </FormErrorMessage>
-                    </FormControl>{' '}
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Category</FormLabel>
-                      <Select
-                        id="category"
-                        variant={inputVariant}
-                        placeholder="Select Category"
-                        {...register('category')}
-                      >
-                        {userCategories?.map((value, index) => (
-                          <option key={index} value={value} name="category">
-                            {value}
-                          </option>
-                        ))}
-                      </Select>
-                      <FormHelperText>
-                        Edit categories in settings
-                      </FormHelperText>
                     </FormControl>
+                    <Controller
+                      name="category"
+                      control={control}
+                      render={({ field }) => {
+                        // Determine the selected option
+                        const selectedOption = userCategories?.find(
+                          (option) => option.value === field.value
+                        )
+
+                        return (
+                          <FormControl>
+                            <FormLabel color={secondaryText}>
+                              Category
+                            </FormLabel>
+                            <CreatableSelect
+                              isClearable
+                              value={selectedOption}
+                              onChange={async (newValue) => {
+                                if (newValue && newValue.__isNew__) {
+                                  // Call the function to save the new category to Supabase
+                                  const updatedCategories =
+                                    await saveNewCategory(newValue.value)
+
+                                  if (updatedCategories) {
+                                    // Update the context with the sorted categories array
+                                    setUserCategories(updatedCategories)
+
+                                    // Update the form state with the newly created category's value
+                                    field.onChange(newValue.value)
+                                  }
+                                } else {
+                                  // Update the form state with the selected value
+                                  field.onChange(newValue ? newValue.value : '')
+                                }
+                              }}
+                              options={userCategories?.map((value) => ({
+                                value: value,
+                                label: value,
+                              }))}
+                            />
+                            <FormHelperText>
+                              Manage categories in settings
+                            </FormHelperText>
+                          </FormControl>
+                        )
+                      }}
+                    />
                   </HStack>
-                  <HStack w="100%" spacing={3} align="start">
+                  <HStack w="100%" spacing={4} align="start">
                     <FormControl>
                       <FormLabel color={secondaryText}>Website</FormLabel>
                       <InputGroup>
@@ -663,7 +723,7 @@ export default function NewSubscription({ subQuery }) {
                       </FormErrorMessage>
                     </FormControl>
                   </HStack>
-                  <HStack w="100%" spacing={3} align="start">
+                  <HStack w="100%" spacing={4} align="start">
                     <VStack w="100%" align="start">
                       <Text
                         as="label"
@@ -783,7 +843,7 @@ export default function NewSubscription({ subQuery }) {
                             onNewTagModalOpen()
                           }}
                         />
-                        <FormHelperText pb={2} boxShadow="none">
+                        <FormHelperText pb={2}>
                           Manage tags in settings
                         </FormHelperText>
                       </FormControl>
@@ -791,13 +851,19 @@ export default function NewSubscription({ subQuery }) {
                   />
                 </VStack>
               </Card>
-              <Divider />
-              <Card w="100%">
-                <VStack align="start" spacing={4}>
-                  <Heading as="h2" size="sm" color={secondaryHeading}>
-                    Expense
-                  </Heading>
-                  <HStack w="100%" spacing={3}>
+              <Card variant="outline" p={[4, 4, 6]} w="100%">
+                <VStack align="start" spacing={6}>
+                  <HStack>
+                    <Icon
+                      as={BiMoney}
+                      color={secondaryHeading}
+                      fontSize="1.4rem"
+                    />
+                    <Heading as="h2" size="md" color={secondaryHeading}>
+                      Billing
+                    </Heading>
+                  </HStack>
+                  <HStack w="100%" spacing={4}>
                     <FormControl isInvalid={errors.cost}>
                       <FormLabel color={secondaryText}>
                         Cost{' '}
@@ -873,18 +939,42 @@ export default function NewSubscription({ subQuery }) {
                       </FormErrorMessage>
                     </FormControl>
                   </HStack>
+                  {paymentMethods?.length > 0 && (
+                    <FormControl isInvalid={errors.payment_method_id}>
+                      <FormLabel color={secondaryText}>
+                        Payment Method{' '}
+                      </FormLabel>
+                      <Select
+                        id="payment_method_id"
+                        {...register('payment_method_id')}
+                        variant="filled"
+                        placeholder="Select a Payment Method"
+                      >
+                        {paymentMethods?.map((item) => (
+                          <option
+                            key={item.id}
+                            value={item.id}
+                            name="Payment Method"
+                          >
+                            {item.name}
+                          </option>
+                        ))}
+                      </Select>
+                      <FormErrorMessage>
+                        {errors.payment_method_id &&
+                          errors.payment_method_id.message}
+                      </FormErrorMessage>
+                      <FormHelperText>
+                        Edit Payment Methods in settings
+                      </FormHelperText>
+                    </FormControl>
+                  )}
                   <Divider />
-                  <Heading as="h2" size="sm" color={secondaryHeading}>
-                    Billing
-                  </Heading>
                   {isRecurring && (
-                    <Stack direction={['column', 'row']} w="100%" spacing={3}>
+                    <Stack direction={['column', 'row']} w="100%" spacing={4}>
                       <FormControl isInvalid={errors?.billing_freq}>
-                        <FormLabel color={secondaryText}>Period</FormLabel>
+                        <FormLabel color={secondaryText}>Every</FormLabel>
                         <HStack>
-                          <Text fontSize="sm" minW="max-content">
-                            Every:
-                          </Text>
                           <NumberInput>
                             <NumberInputField
                               id="billing_freq"
@@ -951,7 +1041,11 @@ export default function NewSubscription({ subQuery }) {
                     </Stack>
                   )}
                   {isRecurring && (
-                    <Accordion allowToggle w="100%">
+                    <Accordion
+                      allowToggle
+                      w="100%"
+                      borderBottomColor="transparent"
+                    >
                       <AccordionItem>
                         <AccordionButton>
                           <HStack w="100%" justify="center">
@@ -960,7 +1054,7 @@ export default function NewSubscription({ subQuery }) {
                           </HStack>
                         </AccordionButton>
                         <AccordionPanel px={0}>
-                          <HStack align="start" spacing={3} w="100%">
+                          <HStack align="start" spacing={4} w="100%">
                             <FormControl isInvalid={errors.initialPaymentDate}>
                               <FormLabel color={secondaryText}>
                                 First Payment
@@ -1005,7 +1099,7 @@ export default function NewSubscription({ subQuery }) {
                               </FormErrorMessage>
                             </FormControl>
                           </HStack>
-                          <HStack align="start" spacing={3} w="100%">
+                          <HStack align="start" spacing={4} w="100%">
                             <FormControl isInvalid={errors.renewal_date}>
                               <FormLabel color={secondaryText}>
                                 Renewal Date
@@ -1036,10 +1130,10 @@ export default function NewSubscription({ subQuery }) {
                       </AccordionItem>
                     </Accordion>
                   )}
-                  <HStack w="100%" spacing={3}>
+                  <HStack w="100%" spacing={4}>
                     {!isRecurring && (
                       <>
-                        <FormControl isInvalid={errors.initialPaymentDate}>
+                        <FormControl isInvalid={errors.paid_on_date}>
                           <FormLabel color={secondaryText}>
                             Paid on{' '}
                             <Text display="inline-block" color="red.500">
@@ -1048,19 +1142,18 @@ export default function NewSubscription({ subQuery }) {
                           </FormLabel>
                           <InputGroup>
                             <Input
-                              id="one_time_paid_date"
+                              id="paid_on_date"
                               variant={inputVariant}
                               type="date"
-                              name="one_time_paid_date"
-                              {...register('one_time_paid_date', {
+                              name="paid_on_date"
+                              {...register('paid_on_date', {
                                 shouldUnregister: true,
                                 required: 'Payment Date is required',
                               })}
                             />
                           </InputGroup>
                           <FormErrorMessage>
-                            {errors.initialPaymentDate &&
-                              errors.initialPaymentDate.message}
+                            {errors.paid_on_date && errors.paid_on_date.message}
                           </FormErrorMessage>
                         </FormControl>
                         <FormControl>
@@ -1085,15 +1178,23 @@ export default function NewSubscription({ subQuery }) {
                   </HStack>
                 </VStack>
               </Card>
-              <Divider />
+            </VStack>
+            <VStack align="start" minW="sm" maxW="max-content" spacing={4}>
               {isRecurring && (
-                <Card w="100%">
-                  <VStack align="start" spacing={3}>
+                <Card variant="outline" p={[4, 4, 6]} w="100%">
+                  <VStack align="start" spacing={6}>
                     <VStack align="start">
-                      <Heading as="h2" size="sm" color={secondaryHeading}>
-                        Reminders
-                      </Heading>
-                      <Text fontSize="sm">
+                      <HStack>
+                        <Icon as={BiBell} fontSize="1.3rem" />
+                        <Heading
+                          as="h2"
+                          fontSize="18px"
+                          color={secondaryHeading}
+                        >
+                          Reminders
+                        </Heading>
+                      </HStack>
+                      <Text>
                         Set up to 3 reminders - you must enter a next payment
                         date
                       </Text>
@@ -1168,12 +1269,19 @@ export default function NewSubscription({ subQuery }) {
                 </Card>
               )}
               {!isRecurring && (
-                <Card>
-                  <VStack align="start" spacing={3}>
+                <Card variant="outline" p={[4, 4, 6]} w="100%">
+                  <VStack align="start" spacing={6}>
                     <VStack align="start">
-                      <Heading as="h2" size="sm" color={secondaryHeading}>
-                        Reminders
-                      </Heading>
+                      <HStack>
+                        <Icon as={BiBell} fontSize="1.3rem" />
+                        <Heading
+                          as="h2"
+                          fontSize="18px"
+                          color={secondaryHeading}
+                        >
+                          Reminders
+                        </Heading>
+                      </HStack>
                       <Text>
                         Set up to 3 reminders - you must enter a refund deadline
                         date
@@ -1236,58 +1344,6 @@ export default function NewSubscription({ subQuery }) {
                   </VStack>
                 </Card>
               )}
-              <Divider />
-              <Card w="100%">
-                <VStack align="start" spacing={3}>
-                  <Heading as="h2" size="sm" color={secondaryHeading}>
-                    Additional Information
-                  </Heading>
-                  {paymentMethods?.length > 0 && (
-                    <FormControl isInvalid={errors.payment_method_id}>
-                      <FormLabel color={secondaryText}>
-                        Payment Method{' '}
-                      </FormLabel>
-                      <Select
-                        id="payment_method_id"
-                        {...register('payment_method_id')}
-                        variant="filled"
-                        placeholder="Select a Payment Method"
-                      >
-                        {paymentMethods?.map((item) => (
-                          <option
-                            key={item.id}
-                            value={item.id}
-                            name="Payment Method"
-                          >
-                            {item.name}
-                          </option>
-                        ))}
-                      </Select>
-                      <FormErrorMessage>
-                        {errors.payment_method_id &&
-                          errors.payment_method_id.message}
-                      </FormErrorMessage>
-                      <FormHelperText>
-                        Edit Payment Methods in settings
-                      </FormHelperText>
-                    </FormControl>
-                  )}
-                </VStack>
-              </Card>
-              <Box p={2} w="100%" pos="fixed" bottom={0} bg={bg}>
-                <Button
-                  type="submit"
-                  isLoading={isLoading}
-                  width="100%"
-                  size="md"
-                  colorScheme="gray"
-                  bg={buttonBg}
-                  color={'whiteAlpha.900'}
-                  _hover={{ background: buttonHover }}
-                >
-                  Add Subscription
-                </Button>
-              </Box>
             </VStack>
           </Stack>
           <Modal

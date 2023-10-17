@@ -23,10 +23,6 @@ export default function Home() {
       return
     }
 
-    console.log('setting session data')
-    console.log(accessToken)
-    console.log(refreshToken)
-
     const { data, error } = await supabaseClient.auth.setSession({
       access_token: accessToken,
       refresh_token: refreshToken,
@@ -41,18 +37,14 @@ export default function Home() {
 
   useEffect(() => {
     // Get gAuth tokens from chrome storage
-    chrome?.storage?.local?.get(
-      ['gauthAccessToken', 'gauthRefreshToken'],
-      function (items) {
-        const gauthAccessToken = items.gauthAccessToken
-        const gauthRefreshToken = items.gauthRefreshToken
-
-        if (gauthAccessToken && gauthRefreshToken) {
-          console.log('gauth tokens found')
-          setSessionData(gauthAccessToken, gauthRefreshToken)
-        }
+    chrome?.storage?.local?.get(['sessionData'], function (result) {
+      if (result.sessionData) {
+        setSessionData(
+          result.sessionData.access_token,
+          result.sessionData.refresh_token
+        )
       }
-    )
+    })
   }, [])
 
   return (
