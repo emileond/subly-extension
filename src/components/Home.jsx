@@ -1,15 +1,10 @@
 /* global chrome */
 
-import {
-  useUser,
-  useSupabaseClient,
-  useSession,
-} from '@supabase/auth-helpers-react'
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import LoginForm from './LoginForm'
 import NewSubscription from './NewSub'
-import { useEffect, useState } from 'react'
-import { Text, Container } from '@chakra-ui/react'
-import SetProjectsData from './SetProjectsData'
+import { useEffect } from 'react'
+import { Container } from '@chakra-ui/react'
 import SetUserData from './SetUserData'
 import Nav from './Nav'
 

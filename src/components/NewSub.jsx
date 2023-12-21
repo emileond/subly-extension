@@ -1,3 +1,4 @@
+/* global chrome */
 import { useEffect, useState } from 'react'
 import { useSupabaseClient } from '@supabase/auth-helpers-react'
 import useUserProfile from '../hooks/useUserProfile'
@@ -226,57 +227,6 @@ export default function NewSubscription() {
       refund_deadline: data.refund_deadline
         ? dayjs(data.refund_deadline).toISOString()
         : null,
-      isEmailReminderActive:
-        parseInt(data.alert_1) ||
-        parseInt(data.alert_2) ||
-        parseInt(data.alert_3) ||
-        parseInt(data.refund_alert_1) ||
-        parseInt(data.refund_alert_2) ||
-        parseInt(data.refund_alert_3)
-          ? true
-          : false,
-      alert1_range:
-        parseInt(data.alert_1) && data.nextPaymentDate
-          ? parseInt(data.alert_1)
-          : parseInt(data.refund_alert_1) && data.refund_deadline
-          ? parseInt(data.refund_alert_1)
-          : null,
-      alert1_date:
-        parseInt(data.alert_1) && data.nextPaymentDate
-          ? alert1Date.format('YYYY-MM-DD')
-          : parseInt(data.refund_alert_1) && data.refund_deadline
-          ? dayjs(data.refund_deadline)
-              .subtract(parseInt(data.refund_alert_1), 'day')
-              .format('YYYY-MM-DD')
-          : null,
-      alert2_range:
-        parseInt(data.alert_2) && data.nextPaymentDate
-          ? parseInt(data.alert_2)
-          : parseInt(data.refund_alert_2) && data.refund_deadline
-          ? parseInt(data.refund_alert_2)
-          : null,
-      alert2_date:
-        parseInt(data.alert_2) && data.nextPaymentDate
-          ? alert2Date.format('YYYY-MM-DD')
-          : parseInt(data.refund_alert_2) && data.refund_deadline
-          ? dayjs(data.refund_deadline)
-              .subtract(parseInt(data.refund_alert_2), 'day')
-              .format('YYYY-MM-DD')
-          : null,
-      alert3_range:
-        parseInt(data.alert_3) && data.nextPaymentDate
-          ? parseInt(data.alert_3)
-          : parseInt(data.refund_alert_3) && data.refund_deadline
-          ? parseInt(data.refund_alert_3)
-          : null,
-      alert3_date:
-        parseInt(data.alert_3) && data.nextPaymentDate
-          ? alert3Date.format('YYYY-MM-DD')
-          : parseInt(data.refund_alert_3) && data.refund_deadline
-          ? dayjs(data.refund_deadline)
-              .subtract(parseInt(data.refund_alert_3), 'day')
-              .format('YYYY-MM-DD')
-          : null,
       notes: data.notes,
       payment_method_id: data.payment_method_id
         ? parseInt(data.payment_method_id)
@@ -526,6 +476,33 @@ export default function NewSubscription() {
       setSubscriptionCurrency(currentWorkspace?.currency)
     }
   }, [currentWorkspace])
+
+  useEffect(() => {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const currentTab = tabs[0]
+      const url = new URL(currentTab.url)
+
+      if (url.protocol === 'http:' || url.protocol === 'https:') {
+        const urlParts = url.hostname.split('.')
+
+        let domainName = ''
+
+        if (urlParts.length === 2) {
+          domainName = urlParts[0]
+        } else if (urlParts.length === 3) {
+          domainName = urlParts[1]
+        } else if (urlParts.length > 3) {
+          domainName = urlParts[urlParts.length - 2]
+        }
+
+        setValue(
+          'name',
+          domainName.charAt(0).toUpperCase() + domainName.slice(1)
+        )
+        setValue('website', url.hostname.replace('www.', ''))
+      }
+    })
+  }, [setValue])
 
   // Listen to project selection and set currentProject to it
   useEffect(() => {
@@ -1178,172 +1155,6 @@ export default function NewSubscription() {
                   </HStack>
                 </VStack>
               </Card>
-            </VStack>
-            <VStack align="start" minW="sm" maxW="max-content" spacing={4}>
-              {isRecurring && (
-                <Card variant="outline" p={[4, 4, 6]} w="100%">
-                  <VStack align="start" spacing={6}>
-                    <VStack align="start">
-                      <HStack>
-                        <Icon as={BiBell} fontSize="1.3rem" />
-                        <Heading
-                          as="h2"
-                          fontSize="18px"
-                          color={secondaryHeading}
-                        >
-                          Reminders
-                        </Heading>
-                      </HStack>
-                      <Text>
-                        Set up to 3 reminders - you must enter a next payment
-                        date
-                      </Text>
-                    </VStack>
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Reminder 1</FormLabel>
-                      <Select
-                        id="alert_1"
-                        isDisabled={!enteredNextPaymentDate}
-                        variant={inputVariant}
-                        {...register('alert_1', {
-                          shouldUnregister: true,
-                        })}
-                      >
-                        <option value={0}>None</option>
-                        <option value={1}>1 Day before</option>
-                        <option value={3}>3 Days before</option>
-                        <option value={5}>5 Days before</option>
-                        <option value={7}>7 Days before</option>
-                        <option value={10}>10 Days before</option>
-                      </Select>
-                      <FormHelperText>
-                        {alert1Date &&
-                          `Next alert on ${alert1Date.format('MMM DD, YYYY')}`}
-                      </FormHelperText>
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Reminder 2</FormLabel>
-                      <Select
-                        id="alert_2"
-                        isDisabled={!enteredNextPaymentDate}
-                        variant={inputVariant}
-                        {...register('alert_2', {
-                          shouldUnregister: true,
-                        })}
-                      >
-                        <option value={0}>None</option>
-                        <option value={1}>1 Day before</option>
-                        <option value={3}>3 Days before</option>
-                        <option value={5}>5 Days before</option>
-                        <option value={7}>7 Days before</option>
-                        <option value={10}>10 Days before</option>
-                      </Select>
-                      <FormHelperText>
-                        {alert2Date &&
-                          `Next alert on ${alert2Date.format('MMM DD, YYYY')}`}
-                      </FormHelperText>
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Reminder 3</FormLabel>
-                      <Select
-                        id="alert_3"
-                        isDisabled={!enteredNextPaymentDate}
-                        variant={inputVariant}
-                        {...register('alert_3', {
-                          shouldUnregister: true,
-                        })}
-                      >
-                        <option value={0}>None</option>
-                        <option value={1}>1 Day before</option>
-                        <option value={3}>3 Days before</option>
-                        <option value={5}>5 Days before</option>
-                        <option value={7}>7 Days before</option>
-                        <option value={10}>10 Days before</option>
-                      </Select>
-                      <FormHelperText>
-                        {alert3Date &&
-                          `Next alert on ${alert3Date.format('MMM DD, YYYY')}`}
-                      </FormHelperText>
-                    </FormControl>
-                  </VStack>
-                </Card>
-              )}
-              {!isRecurring && (
-                <Card variant="outline" p={[4, 4, 6]} w="100%">
-                  <VStack align="start" spacing={6}>
-                    <VStack align="start">
-                      <HStack>
-                        <Icon as={BiBell} fontSize="1.3rem" />
-                        <Heading
-                          as="h2"
-                          fontSize="18px"
-                          color={secondaryHeading}
-                        >
-                          Reminders
-                        </Heading>
-                      </HStack>
-                      <Text>
-                        Set up to 3 reminders - you must enter a refund deadline
-                        date
-                      </Text>
-                    </VStack>
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Reminder 1</FormLabel>
-                      <Select
-                        id="refund_alert_1"
-                        isDisabled={!enteredRefundDate}
-                        variant={inputVariant}
-                        {...register('refund_alert_1', {
-                          shouldUnregister: true,
-                        })}
-                      >
-                        <option value={0}>None</option>
-                        <option value={1}>1 Day before</option>
-                        <option value={3}>3 Days before</option>
-                        <option value={5}>5 Days before</option>
-                        <option value={7}>7 Days before</option>
-                        <option value={10}>10 Days before</option>
-                      </Select>
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Reminder 2</FormLabel>
-                      <Select
-                        id="refund_alert_2"
-                        isDisabled={!enteredRefundDate}
-                        variant={inputVariant}
-                        {...register('refund_alert_2', {
-                          shouldUnregister: true,
-                        })}
-                      >
-                        <option value={0}>None</option>
-                        <option value={1}>1 Day before</option>
-                        <option value={3}>3 Days before</option>
-                        <option value={5}>5 Days before</option>
-                        <option value={7}>7 Days before</option>
-                        <option value={10}>10 Days before</option>
-                      </Select>
-                    </FormControl>
-                    <FormControl>
-                      <FormLabel color={secondaryText}>Reminder 3</FormLabel>
-                      <Select
-                        id="refund_alert_3"
-                        isDisabled={!enteredRefundDate}
-                        variant={inputVariant}
-                        {...register('refund_alert_3', {
-                          shouldUnregister: true,
-                        })}
-                      >
-                        <option value={0}>None</option>
-                        <option value={1}>1 Day before</option>
-                        <option value={3}>3 Days before</option>
-                        <option value={5}>5 Days before</option>
-                        <option value={7}>7 Days before</option>
-                        <option value={10}>10 Days before</option>
-                      </Select>
-                    </FormControl>
-                  </VStack>
-                </Card>
-              )}
             </VStack>
           </Stack>
           <Modal

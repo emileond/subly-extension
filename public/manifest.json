@@ -1,12 +1,12 @@
 {
   "manifest_version": 3,
   "name": "Subly",
-  "version": "0.0.0.1",
+  "version": "0.0.1",
   "action": {
     "default_popup": "index.html",
     "default_title": "Subly - Subscriptions manager"
   },
-  "permissions": ["storage", "tabs"],
+  "permissions": ["storage", "tabs", "activeTab"],
   "background": {
     "service_worker": "sw.js"
   },
