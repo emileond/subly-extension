@@ -5,9 +5,9 @@ import {
   Button,
   useColorModeValue,
   Stack,
-  VStack
+  VStack,
+  Image,
 } from '@chakra-ui/react'
-import Image from 'next/image'
 
 const EmptyState = ({
   img,
@@ -17,12 +17,12 @@ const EmptyState = ({
   ctaClick,
   size,
   orientation,
-  headingSize
+  headingSize,
 }) => {
   const imgSize = {
     md: ['60%', '32%', '22%', '17%', '17%', '17%'],
     lg: ['60%', '40%', '35%', '30%'],
-    xl: ['70%', '70%', '60%', '55%', '50%', '50%']
+    xl: ['70%', '70%', '60%', '55%', '50%', '50%'],
   }
 
   // Color mode values
@@ -52,7 +52,7 @@ const EmptyState = ({
             alt="Empty state image."
             style={{
               width: '100%',
-              height: 'auto'
+              height: 'auto',
             }}
           />
         </Box>

@@ -13,6 +13,9 @@ import { useForm, Controller } from 'react-hook-form'
 import { CreatableSelect } from 'chakra-react-select'
 import dayjs from 'dayjs'
 import {
+  Alert,
+  AlertIcon,
+  AlertDescription,
   Avatar,
   Box,
   Button,
@@ -75,6 +78,7 @@ import SetProjectsData from './SetProjectsData'
 import getLogo from '../utils/getLogo'
 import SetUserData from './SetUserData'
 import PageHeader from './PageHeader'
+import RemindersCard from './RemindersCard'
 
 export default function NewSubscription() {
   const supabaseClient = useSupabaseClient()
@@ -89,6 +93,13 @@ export default function NewSubscription() {
   const [paymentMethods, setPaymentMethods] = usePaymentMethods()
   const [tags, setTags] = useTags()
   const toast = useToast()
+
+  const [remindersData, setRemindersData] = useState([])
+  const [remindersError, setRemindersError] = useState(false)
+
+  const handleRemindersData = (data) => {
+    setRemindersData(data)
+  }
 
   const [newTag, setNewTag] = useState(null)
 
@@ -158,10 +169,9 @@ export default function NewSubscription() {
   const enteredFreq = watch('billing_freq')
   const enteredRange = watch('billing_range')
   const enteredNextPaymentDate = watch('nextPaymentDate')
+  const enteredEndDate = watch('end_date')
+  const enteredRenewalDate = watch('renewal_date')
   const enteredRefundDate = watch('refund_deadline')
-  const selectedAlert1 = watch('alert_1')
-  const selectedAlert2 = watch('alert_2')
-  const selectedAlert3 = watch('alert_3')
   const selectedProject = watch('project_id')
 
   const updateDefaultCurrency = (currency) => {
@@ -194,6 +204,16 @@ export default function NewSubscription() {
   )
 
   const onSubmit = async (data) => {
+    // Check if any reminders are invalid
+    const hasInvalidReminders = remindersData.some(
+      (reminder) => reminder.isInvalid
+    )
+
+    if (hasInvalidReminders) {
+      setRemindersError(true)
+      return // Return early to prevent submission
+    }
+
     const newSub = {
       user_id: currentWorkspace?.user_id,
       isActive: true,
@@ -256,26 +276,60 @@ export default function NewSubscription() {
         isClosable: true,
       })
 
-      // Once the sub was saved, return all user subs and update Subs Context
-      const { data: allSubsData } = await supabaseClient
-        .from('Subscriptions')
-        .select('*')
-        .eq('workspace_id', currentWorkspace?.id)
+      try {
+        const reminders = await saveReminders(subData[0].id, remindersData)
+        // Once the sub and reminders are saved, fetch all subs again
+        // const { data: allSubsData } = await supabaseClient
+        //   .from('Subscriptions')
+        //   .select('*')
+        //   .eq('workspace_id', currentWorkspace?.id)
 
-      if (allSubsData) {
+        // if (allSubsData) {
         setIsLoading(false)
+        // }
+      } catch (error) {
+        setIsLoading(false)
+        toast({
+          title: 'An error occurred, try again',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        })
+        console.error(error)
       }
     }
-    if (subError) {
-      setIsLoading(false)
-      toast({
-        title: 'An error occurred, try again',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      })
-      console.error(subError)
+  }
+
+  const saveReminders = async (sub_id, reminders) => {
+    const validReminders = reminders
+      .filter((reminder) => reminder.reminderDate && !reminder.isInvalid)
+      .map((reminder) => ({
+        subscription_id: sub_id,
+        workspace_id: currentWorkspace?.id,
+        reminder_date: reminder.reminderDate,
+        reminder_type: reminder.reminder_type,
+        reminder_offset: reminder.reminder_offset,
+        status: 'pending',
+      }))
+
+    if (validReminders.length > 0) {
+      const { data, error } = await supabaseClient
+        .from('reminders')
+        .insert(validReminders)
+
+      if (error) {
+        toast({
+          title: 'Error saving reminders',
+          description: error.message,
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
+        throw error
+      }
+      return data
     }
+    return []
   }
 
   // save new category
@@ -404,72 +458,6 @@ export default function NewSubscription() {
     }
   }, [enteredWebsite, setValue])
 
-  const [alert1Date, setAlert1Date] = useState(null)
-  const [alert2Date, setAlert2Date] = useState(null)
-  const [alert3Date, setAlert3Date] = useState(null)
-
-  // listen to alert range changes and set dates
-  useEffect(() => {
-    if (enteredNextPaymentDate) {
-      const nextPaymentDate = dayjs(enteredNextPaymentDate)
-
-      if (selectedAlert1 > 0) {
-        const alert1 = nextPaymentDate.subtract(parseInt(selectedAlert1), 'day')
-        // if the alert date would be before the current date, set it to the current date
-        if (alert1.isBefore(dayjs())) {
-          const nextAlertDate = nextPaymentDate
-            .add(parseInt(enteredFreq), enteredRange)
-            .subtract(parseInt(selectedAlert1), 'day')
-
-          setAlert1Date(nextAlertDate)
-        } else {
-          setAlert1Date(alert1)
-        }
-      } else {
-        setAlert1Date(null)
-      }
-
-      if (selectedAlert2 > 0) {
-        const alert2 = nextPaymentDate.subtract(parseInt(selectedAlert2), 'day')
-        // if the alert date would be before the current date, set it to the current date
-        if (alert2.isBefore(dayjs())) {
-          const nextAlertDate = nextPaymentDate
-            .add(parseInt(enteredFreq), enteredRange)
-            .subtract(parseInt(selectedAlert2), 'day')
-
-          setAlert2Date(nextAlertDate)
-        } else {
-          setAlert2Date(alert2)
-        }
-      } else {
-        setAlert2Date(null)
-      }
-
-      if (selectedAlert3 > 0) {
-        const alert3 = nextPaymentDate.subtract(parseInt(selectedAlert3), 'day')
-        // if the alert date would be before the current date, set it to the current date
-        if (alert3.isBefore(dayjs())) {
-          const nextAlertDate = nextPaymentDate
-            .add(parseInt(enteredFreq), enteredRange)
-            .subtract(parseInt(selectedAlert3), 'day')
-
-          setAlert3Date(nextAlertDate)
-        } else {
-          setAlert3Date(alert3)
-        }
-      } else {
-        setAlert3Date(null)
-      }
-    }
-  }, [
-    selectedAlert1,
-    selectedAlert2,
-    selectedAlert3,
-    enteredNextPaymentDate,
-    enteredFreq,
-    enteredRange,
-  ])
-
   useEffect(() => {
     if (currentWorkspace) {
       fetchTags()
@@ -526,6 +514,14 @@ export default function NewSubscription() {
             primaryCTA="Add subscription"
             isLoading={isLoading}
           />
+          {(Object.keys(errors).length > 0 || remindersError) && (
+            <Alert status="error" borderRadius={5}>
+              <AlertIcon />
+              <AlertDescription>
+                There are errors in the form, please fix them and try again
+              </AlertDescription>
+            </Alert>
+          )}
           <Stack
             direction={['column', 'column', 'row-reverse', 'row-reverse']}
             alignItems={['center', 'center', 'start', 'start']}
@@ -1155,6 +1151,19 @@ export default function NewSubscription() {
                   </HStack>
                 </VStack>
               </Card>
+              <RemindersCard
+                mode="create"
+                onRemindersDataChange={handleRemindersData}
+                subscription={{
+                  nextPaymentDate: enteredNextPaymentDate,
+                  end_date: enteredEndDate,
+                  refund_deadline: enteredRefundDate,
+                  renewal_date: enteredRenewalDate,
+                  billing_freq: enteredFreq,
+                  billing_range: enteredRange,
+                }}
+                locale={currentWorkspace?.locale}
+              />
             </VStack>
           </Stack>
           <Modal

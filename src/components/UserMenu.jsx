@@ -191,6 +191,7 @@ const UserMenu = ({ user }) => {
                 title="Settings"
               />
               <NavItem
+                linkTo="https://chromewebstore.google.com/u/1/detail/subly/adkphphbcoohfcgjhajhkedngglechcj/reviews"
                 isNavExpanded
                 icon={<BiMessageAltDetail fontSize={22} />}
                 title="Rate the extension"
