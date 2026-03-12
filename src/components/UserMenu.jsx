@@ -11,7 +11,6 @@ import useCurrentProject from '../hooks/useCurrentProject'
 import usePaymentMethods from '../hooks/usePaymentMethods'
 import {
   Box,
-  Button,
   Divider,
   Drawer,
   DrawerBody,
@@ -21,36 +20,21 @@ import {
   DrawerHeader,
   DrawerOverlay,
   Flex,
-  Heading,
-  Icon,
-  Image,
-  Link,
   Stack,
   useDisclosure,
   VStack,
-  Menu,
-  MenuList,
-  MenuDivider,
-  MenuItem,
-  HStack,
   Text,
-  Badge,
   useColorModeValue,
   useToast,
 } from '@chakra-ui/react'
 import UserMenuBtn from './UserMenuBtn'
 import {
-  BiGift,
   BiCog,
   BiLogOut,
   BiPieChartAlt,
   BiInfoCircle,
   BiMessageAltDetail,
   BiCard,
-  BiUser,
-  BiReceipt,
-  BiEnvelopeOpen,
-  BiPowerOff,
 } from 'react-icons/bi'
 import AccountLimitCard from './AccountLimitCard'
 import NavItem from './NavItem'
@@ -71,27 +55,49 @@ const UserMenu = ({ user }) => {
   const [paymentMethods, setPaymentMethods] = usePaymentMethods()
   const [userProfile, setUserProfile] = useUserProfile()
 
-  const secondaryText = useColorModeValue('blackAlpha.700', 'whiteAlpha.700')
-
   const handleSignOut = async () => {
-    await supabaseClient.auth.signOut().then(() =>
+    try {
+      const { error } = await supabaseClient.auth.signOut({ scope: 'local' })
+      if (error) {
+        throw error
+      }
+
+      await supabaseClient.removeAllChannels()
+      setUserProfile(null)
+      setUserSettings(null)
+      setUserCategories(null)
+      setWorkspaces(null)
+      setCurrentWorkspace(null)
+      setProjects(null)
+      setCurrentProject(null)
+      setPaymentMethods(null)
+
+      await new Promise((resolve, reject) => {
+        chrome.storage.local.clear(() => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message))
+            return
+          }
+          resolve()
+        })
+      })
+
       toast({
         title: 'Logged Out Successfully',
         status: 'success',
         duration: 3000,
         isClosable: true,
       })
-    )
-    supabaseClient.removeAllChannels()
-    setUserProfile(null)
-    setUserSettings(null)
-    setUserCategories(null)
-    setWorkspaces(null)
-    setCurrentWorkspace(null)
-    setProjects(null)
-    setCurrentProject(null)
-    setPaymentMethods(null)
-    chrome.storage.local.clear()
+    } catch (error) {
+      console.error('Failed to sign out', error)
+      toast({
+        title: 'Could not sign out',
+        description: error?.message || 'Please try again.',
+        status: 'error',
+        duration: 4000,
+        isClosable: true,
+      })
+    }
   }
 
   return (

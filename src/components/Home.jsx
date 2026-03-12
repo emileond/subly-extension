@@ -3,14 +3,17 @@
 import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import LoginForm from './LoginForm'
 import NewSubscription from './NewSub'
-import { useEffect } from 'react'
-import { Container } from '@chakra-ui/react'
+import { useEffect, useState } from 'react'
+import { Container, Tab, TabList, TabPanel, TabPanels, Tabs } from '@chakra-ui/react'
 import SetUserData from './SetUserData'
 import Nav from './Nav'
+import SetProjectsData from './SetProjectsData'
+import AppsumoImport from './AppsumoImport'
 
 export default function Home() {
   const user = useUser()
   const supabaseClient = useSupabaseClient()
+  const [activeTab, setActiveTab] = useState(0)
 
   const setSessionData = async (accessToken, refreshToken) => {
     if (!accessToken || !refreshToken) {
@@ -47,9 +50,28 @@ export default function Home() {
       {user ? (
         <>
           <SetUserData />
+          <SetProjectsData />
           <Nav user={user} />
           <Container m="0 auto" maxW="800px" minW="420px">
-            <NewSubscription />
+            <Tabs
+              index={activeTab}
+              onChange={setActiveTab}
+              variant="enclosed"
+              mt={3}
+            >
+              <TabList>
+                <Tab>Add Subscription</Tab>
+                <Tab>AppSumo Import</Tab>
+              </TabList>
+              <TabPanels>
+                <TabPanel px={0} pt={4}>
+                  <NewSubscription />
+                </TabPanel>
+                <TabPanel px={0} pt={4}>
+                  <AppsumoImport />
+                </TabPanel>
+              </TabPanels>
+            </Tabs>
           </Container>
         </>
       ) : (

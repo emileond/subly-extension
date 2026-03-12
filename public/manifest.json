@@ -1,12 +1,18 @@
 {
   "manifest_version": 3,
   "name": "Subly",
-  "version": "0.0.2",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAg7VAlb587h62TtIP97SKA9tb/kd28RQnGt6T/3pP2JXy8eOrWLiw+Odbel6Ibbkzf+LpZGgS/82QeeCZkab86SkKx9rDnyY3rCz1dny5PeCYMzZx2t2980lBwYzK0UUmKcUrOswUTM7Ot0D2SWGuu4S6JOpfFVKeuzIDfbBpXgN6z8rIXlIoLqTpFqmxhG9CZe2vPmaulS5Aljdxfza8iJ49ledN6tlh8b/trWFkjGldpvG6hVBQLBW4lsvfF7SwWF09COv2cwjvLCBEg/NfZaXo3tKAw3i97wf0lj4OuWjf6tvYdbKbXYK7cHPFZ1msuKjrlesVIwWsCNth3Vbs9wIDAQAB",
+  "version": "0.0.4",
   "action": {
     "default_popup": "index.html",
     "default_title": "Subly - Subscriptions manager"
   },
-  "permissions": ["storage", "tabs", "activeTab"],
+  "permissions": ["storage", "tabs", "activeTab", "scripting"],
+  "host_permissions": [
+    "https://web.subly.app/*",
+    "https://appsumo.com/*",
+    "http://localhost:3000/*"
+  ],
   "background": {
     "service_worker": "sw.js"
   },

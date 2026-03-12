@@ -74,9 +74,7 @@ import CurrenciesList from '../components/CurrenciesList'
 import { getAbbreviation } from '../utils/getAbbreviation'
 import SubsIconUpload from '../components/SubsIconUpload'
 import NewTagForm from '../components/NewTagForm'
-import SetProjectsData from './SetProjectsData'
 import getLogo from '../utils/getLogo'
-import SetUserData from './SetUserData'
 import PageHeader from './PageHeader'
 import RemindersCard from './RemindersCard'
 
@@ -277,7 +275,7 @@ export default function NewSubscription() {
       })
 
       try {
-        const reminders = await saveReminders(subData[0].id, remindersData)
+        const reminders = await saveReminders(subData[0]?.id, remindersData)
         // Once the sub and reminders are saved, fetch all subs again
         // const { data: allSubsData } = await supabaseClient
         //   .from('Subscriptions')
@@ -504,8 +502,6 @@ export default function NewSubscription() {
 
   return (
     <>
-      <SetUserData />
-      <SetProjectsData />
       {currentWorkspace ? (
         <VStack justifyContent="start" maxW="fit-content" margin="auto">
           <PageHeader
