@@ -23,7 +23,7 @@ page you did not open the extension on.
 ## What it sends, and when
 
 Nothing is sent until you press one of two buttons. Everything goes to the Subly web app (`https://web.subly.app`),
-with your Subly sign-in token, over HTTPS.
+with the extension's Subly token, over HTTPS.
 
 - **When the popup opens:** it asks Subly for your workspace, projects, categories, payment methods and tags (to fill
   the form's choices). No page content is sent.
@@ -39,15 +39,17 @@ authentication service, to renew your sign-in (see below).
 
 ## What it stores
 
-In `chrome.storage.local`, on your computer: your sign-in session (the access token, the refresh token, when the access
-token ends and your email address). Nothing else. Tokens are never logged.
+In `chrome.storage.local`, on your computer: the extension's Subly token, when it ends (90 days after you sign in) and your
+account's id and email. Nothing else. The token belongs to the extension alone: it is valid on the extension's three
+Subly routes and nowhere else, and it is not your website sign-in. Tokens are never logged.
 
 ## Signing in and out
 
-Signing in happens on the Subly website (`/chrome-extension-login`), which sends the session to the extension. The
-extension accepts it only from the Subly origin it was built for. It renews the access token with the refresh token by
-calling Subly's authentication service (Supabase). **Sign out** deletes the session from this browser; it does not sign
-you out of the website.
+Signing in happens on the Subly website (`/chrome-extension-login`), which creates the token and sends it to the extension.
+The extension accepts it only from the Subly origin it was built for. When it ends or is replaced, you sign in again;
+there is no background renewal. **Sign out** in the popup deletes the token from this browser, and you can also sign the
+extension out from **Connections** in the Subly web app, which stops the token working everywhere. Neither signs you out
+of the website, and signing out of the website does not affect the extension.
 
 ## Permissions
 
@@ -55,8 +57,8 @@ you out of the website.
 | --- | --- |
 | `activeTab` | Read the tab you are on, only when you click the extension. |
 | `scripting` | Inject the page reader into that tab. |
-| `storage` | Keep your sign-in session. |
-| `https://web.subly.app/*` | Call the Subly API and receive the session from the sign-in page. |
+| `storage` | Keep the extension's Subly token. |
+| `https://web.subly.app/*` | Call the Subly API and receive the token from the sign-in page. |
 
 ## Questions
 

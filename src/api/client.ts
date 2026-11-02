@@ -18,15 +18,13 @@ export interface ApiOptions {
   baseUrl: string
   /** The current access token, or null when signed out */
   getToken: () => Promise<string | null>
-  /** Called once after a 401: returns a fresh access token, or null when the person has to sign in again */
-  refreshToken: () => Promise<string | null>
-  /** Called when the server no longer accepts the person's session */
+  /** Called on any 401: the stored token is no longer accepted and has to be cleared */
   onSignedOut: () => void
   fetch?: typeof fetch
   timeoutMs?: number
 }
 
-/** The server answers `{ error: "text" }` or `{ error: { code, message } }`; either way this is the text */
+/** The server answers `{ error: { code, message } }` (or `{ error: "text" }`); this is the text */
 function errorMessage(body: unknown): string {
   const error = (body as { error?: unknown } | null)?.error
   if (typeof error === 'string') return error
@@ -34,8 +32,23 @@ function errorMessage(body: unknown): string {
   return typeof message === 'string' ? message : ''
 }
 
+const errorCode = (body: unknown): string => {
+  const code = ((body as { error?: { code?: unknown } } | null)?.error as { code?: unknown } | undefined)?.code
+  return typeof code === 'string' ? code : ''
+}
+
+/** Every 401 means "sign in again"; the code only changes why we say it */
+const SIGNED_OUT: Record<string, string> = {
+  invalid_token: 'You were signed out of the extension, or you signed in again on another browser. Sign in again to keep adding.',
+  token_expired: 'Your sign-in for the extension ended after 90 days. Sign in again to keep adding.',
+  mfa_required: 'Two-factor sign-in was turned on for your account. Sign in again and enter the code.',
+}
+export const signedOutMessage = (code: string) =>
+  SIGNED_OUT[code] ?? 'The extension is not signed in to Subly. Sign in to keep adding.'
+
 const FALLBACK: Record<ApiErrorCode, string> = {
-  unauthorized: 'Your Subly session has ended. Sign in again.',
+  unauthorized: signedOutMessage(''),
+  forbidden: 'Your Subly account has no workspace yet. Finish setting up at web.subly.app, then try again.',
   limit: 'Your plan does not allow adding more items.',
   allowance: 'You have used this month’s AI allowance.',
   rate: 'Too many requests. Wait a minute and try again.',
@@ -71,20 +84,17 @@ export function createApiClient(options: ApiOptions): ApiClient {
       }
     }
 
-    let token = await options.getToken()
+    const token = await options.getToken()
     if (!token) {
       options.onSignedOut()
-      throw new ApiError('unauthorized', FALLBACK.unauthorized, 401)
+      throw new ApiError('unauthorized', FALLBACK.unauthorized, 401, 'unauthorized')
     }
-    let result = await attempt(token)
+    // No renewing and no retry: a 401 always means the person has to sign in again
+    const result = await attempt(token)
     if (result.status === 401) {
-      // The token may simply have ended a moment ago: renew once before giving up
-      token = (await options.refreshToken().catch(() => null)) ?? ''
-      if (token) result = await attempt(token)
-      if (!token || result.status === 401) {
-        options.onSignedOut()
-        throw new ApiError('unauthorized', FALLBACK.unauthorized, 401)
-      }
+      const code = errorCode(result.body)
+      options.onSignedOut()
+      throw new ApiError('unauthorized', signedOutMessage(code), 401, code)
     }
     return failOnError(result, parse)
   }
@@ -95,9 +105,11 @@ export function createApiClient(options: ApiOptions): ApiClient {
     // 409 carries the existing item and is an answer, not an error (the caller reads it)
     if (status === 409) return result
     const code: ApiErrorCode =
-      status === 402 || status === 403
+      status === 402
         ? 'limit'
-        : status === 429
+        : status === 403
+          ? 'forbidden'
+          : status === 429
           ? isParse
             ? 'allowance'
             : 'rate'
@@ -106,7 +118,10 @@ export function createApiClient(options: ApiOptions): ApiClient {
             : status >= 500
               ? 'server'
               : 'server'
-    throw new ApiError(code, errorMessage(body) || FALLBACK[code], status)
+    const suggestion = (body as { suggestion?: Suggestion } | null)?.suggestion ?? null
+    // A 403 means no workspace yet (or someone else's): say where to fix it, not the server's code
+    const message = code === 'forbidden' || code === 'allowance' ? FALLBACK[code] : errorMessage(body) || FALLBACK[code]
+    throw new ApiError(code, message, status, errorCode(body), suggestion)
   }
 
   return {

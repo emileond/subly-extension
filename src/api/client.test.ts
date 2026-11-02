@@ -8,7 +8,6 @@ function client(overrides: Partial<Parameters<typeof createApiClient>[0]> = {}, 
   const api = createApiClient({
     baseUrl: 'https://web.subly.app',
     getToken: async () => MOCK_TOKEN,
-    refreshToken: async () => null,
     onSignedOut,
     fetch: mock as unknown as typeof fetch,
     ...overrides,
@@ -63,18 +62,38 @@ describe('api client', () => {
     await expect(api.addItem({ workspaceId: 1, item })).rejects.toMatchObject({ code: 'limit', message: 'Upgrade your plan' })
   })
 
-  it('signs out on a 401 that a refresh does not fix', async () => {
-    const { api, onSignedOut } = client({ getToken: async () => 'stale', refreshToken: async () => null })
-    await expect(api.getContext()).rejects.toMatchObject({ code: 'unauthorized' })
+  it.each([
+    ['sbx_other', 'invalid_token', /signed out of the extension|another browser/],
+    ['sbx_expired', 'token_expired', /90 days/],
+    ['sbx_mfa', 'mfa_required', /two-factor/i],
+  ])('a 401 with %s means sign in again, with the reason for %s', async (token, serverCode, words) => {
+    const mock = vi.fn(createMockFetch())
+    const { api, onSignedOut } = client({ getToken: async () => token }, mock as never)
+    await expect(api.getContext()).rejects.toMatchObject({ code: 'unauthorized', status: 401, serverCode, message: expect.stringMatching(words) })
+    expect(onSignedOut).toHaveBeenCalledOnce()
+    // No renewing and no retry
+    expect(mock).toHaveBeenCalledTimes(1)
+  })
+
+  it('a 401 for a missing header is a plain sign-in message', async () => {
+    const fetchMock = async () => new Response(JSON.stringify({ error: { code: 'unauthorized', message: 'x' } }), { status: 401 })
+    const { api, onSignedOut } = client({ fetch: fetchMock as never })
+    await expect(api.getContext()).rejects.toMatchObject({ code: 'unauthorized', serverCode: 'unauthorized' })
     expect(onSignedOut).toHaveBeenCalledOnce()
   })
 
-  it('renews the token once after a 401 and retries', async () => {
-    const refreshToken = vi.fn(async () => MOCK_TOKEN)
-    const { api, onSignedOut } = client({ getToken: async () => 'stale', refreshToken })
-    await expect(api.getContext()).resolves.toMatchObject({ workspace: { id: 1 } })
-    expect(refreshToken).toHaveBeenCalledOnce()
+  it('a 403 points to the website to finish setting up', async () => {
+    const fetchMock = async () => new Response(JSON.stringify({ error: { code: 'forbidden', message: 'no workspace' } }), { status: 403 })
+    const { api, onSignedOut } = client({ fetch: fetchMock as never })
+    await expect(api.getContext()).rejects.toMatchObject({ code: 'forbidden', message: expect.stringContaining('web.subly.app') })
     expect(onSignedOut).not.toHaveBeenCalled()
+  })
+
+  it('keeps the suggestion the server sends with a spent AI allowance', async () => {
+    const { api } = client({}, createMockFetch({ aiAllowance: 0 }))
+    const error = await api.parse({ url: 'https://paperly.com/pricing', title: 'P' }).catch((e) => e)
+    expect(error).toMatchObject({ code: 'allowance', status: 429 })
+    expect(error.suggestion).toMatchObject({ name: 'Paperly', amount: null, currency: null, source: 'merchant' })
   })
 
   it('treats a missing token as signed out', async () => {

@@ -12,9 +12,10 @@ import App from './App'
 
 afterEach(cleanup)
 
-const session = { accessToken: MOCK_TOKEN, refreshToken: 'r', expiresAt: 9_999_999_999, email: 'sam@example.com' }
+const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString()
+const credential = (days = 90) => ({ token: MOCK_TOKEN, expiresAt: inDays(days), user: { id: 'user-1', email: 'sam@example.com' } })
 
-function setup(options: { page?: string | null; signedIn?: boolean; token?: string; mock?: MockOptions } = {}) {
+function setup(options: { page?: string | null; signedIn?: boolean; token?: string; days?: number; mock?: MockOptions } = {}) {
   const mock = createMockFetch(options.mock)
   const signOut = vi.fn(async () => {})
   const openLogin = vi.fn(async () => {})
@@ -25,15 +26,13 @@ function setup(options: { page?: string | null; signedIn?: boolean; token?: stri
   const token = options.token ?? MOCK_TOKEN
   const deps: Deps = {
     auth: {
-      getSession: async () => (options.signedIn === false ? null : session),
-      getAccessToken: async () => token,
-      refresh: async () => null,
+      getCredential: async () => (options.signedIn === false ? null : credential(options.days)),
+      getToken: async () => token,
       signOut,
     },
     api: createApiClient({
       baseUrl: 'https://web.subly.app',
       getToken: async () => token,
-      refreshToken: async () => null,
       onSignedOut: () => void signOut(),
       fetch: mock as unknown as typeof fetch,
     }),
@@ -63,10 +62,39 @@ describe('signed out', () => {
     expect(await screen.findByRole('button', { name: 'Sign in to Subly' })).toBeTruthy()
   })
 
-  it('goes back to signed out with a message when the server rejects the session', async () => {
-    setup({ token: 'expired' })
-    expect(await screen.findByText(/session ended/i)).toBeTruthy()
+  it('tells the person to click the icon again after opening the sign-in tab', async () => {
+    const { user } = setup({ signedIn: false })
+    await user.click(await screen.findByRole('button', { name: 'Sign in to Subly' }))
+    expect(await screen.findByText(/Waiting for you to sign in/)).toBeTruthy()
+  })
+
+  it.each([
+    ['sbx_other', /another browser/],
+    ['sbx_expired', /90 days/],
+    ['sbx_mfa', /two-factor/i],
+  ])('goes back to signed out, clearing the token, when the server answers 401 for %s', async (token, words) => {
+    const { signOut } = setup({ token })
+    expect(await screen.findByText(words)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Sign in to Subly' })).toBeTruthy()
+    expect(signOut).toHaveBeenCalled()
+  })
+
+  it('is signed out, with the 90 days message, when the stored token has ended', async () => {
+    const { signOut } = setup({ days: -1 })
+    expect(await screen.findByText(/90 days/)).toBeTruthy()
+    expect(signOut).toHaveBeenCalled()
+  })
+
+  it('offers signing in again in the last 7 days of the token', async () => {
+    const { user, openLogin } = setup({ days: 3 })
+    await user.click(await screen.findByRole('button', { name: 'Sign in again' }))
+    expect(openLogin).toHaveBeenCalled()
+  })
+
+  it('does not nag earlier than that', async () => {
+    setup()
+    await field('Name')
+    expect(screen.queryByText(/ends soon/)).toBeNull()
   })
 })
 
@@ -145,6 +173,7 @@ describe('adding the page', () => {
   it('blocks saving and says why when the account is at its limit', async () => {
     setup({ mock: { atLimit: true } })
     expect(await screen.findByText(/can’t add more right now/)).toBeTruthy()
+    expect(screen.getByText(/item limit is reached/)).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Add to Subly' })).toHaveProperty('disabled', true)
   })
 
@@ -201,5 +230,8 @@ describe('Read this page with AI', () => {
     const { user } = setup({ page: 'no-price', mock: { aiAllowance: 0 } })
     await user.click(await screen.findByRole('button', { name: 'Read this page with AI' }))
     expect(await screen.findByText(/used your AI allowance/)).toBeTruthy()
+    // What the server could read without the model is still filled in
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveProperty('value', 'Example-news')
+    expect(screen.getByRole('textbox', { name: 'Amount' })).toHaveProperty('value', '')
   })
 })

@@ -24,7 +24,7 @@ interface Props {
   ctx: ExtensionContext
   page: PageRead
   extraction: Extraction | null
-  onSignedOut: () => void
+  onSignedOut: (message: string) => void
 }
 
 type Outcome =
@@ -106,10 +106,10 @@ export function AddItem({ deps, ctx, page, extraction: found, onSignedOut }: Pro
     setAiApplied(false)
   }
 
-  function onSuggestion(suggestion: Suggestion) {
+  function onSuggestion(suggestion: Suggestion, byAi = true) {
     setValues((v) => applySuggestion(v, suggestion, ctx, edited.current, today))
     setSelectedPlan(-1)
-    setAiApplied(true)
+    setAiApplied(byAi)
   }
 
   function changeRange(range: FormValues['range']) {
@@ -144,7 +144,7 @@ export function AddItem({ deps, ctx, page, extraction: found, onSignedOut }: Pro
         setOutcome({ kind: 'created', name: values.name.trim(), url: result.url })
       }
     } catch (error) {
-      if (error instanceof ApiError && error.code === 'unauthorized') return onSignedOut()
+      if (error instanceof ApiError && error.code === 'unauthorized') return onSignedOut(error.message)
       setOutcome({ kind: 'error', message: error instanceof Error ? error.message : 'Something went wrong.' })
     } finally {
       setSaving(false)
@@ -194,7 +194,8 @@ export function AddItem({ deps, ctx, page, extraction: found, onSignedOut }: Pro
     >
       {!ctx.canAdd && (
         <div className="notice warn" role="alert">
-          <strong>You can’t add more right now.</strong> {ctx.limitReason ?? 'Your plan’s limit is reached.'}{' '}
+          <strong>You can’t add more right now.</strong>{' '}
+          {ctx.limitReason === 'item_limit' || !ctx.limitReason ? 'Your plan’s item limit is reached.' : ctx.limitReason}{' '}
           <a href={deps.baseUrl} target="_blank" rel="noreferrer">Open Subly</a>
         </div>
       )}
@@ -338,6 +339,9 @@ export function AddItem({ deps, ctx, page, extraction: found, onSignedOut }: Pro
           workspaceId={ctx.workspace.id}
           weak={weak}
           onSuggestion={onSuggestion}
+          onAllowanceSpent={(suggestion) => {
+            if (suggestion) onSuggestion(suggestion, false)
+          }}
           onSignedOut={onSignedOut}
         />
       )}

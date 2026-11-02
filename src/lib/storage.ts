@@ -39,4 +39,5 @@ export const storage: Area = {
   },
 }
 
-export const SESSION_KEY = 'session'
+/** Where the extension token is kept */
+export const CREDENTIAL_KEY = 'extensionToken'

@@ -10,11 +10,13 @@ type Loaded<T> = { state: 'loading' } | { state: 'error'; message: string } | { 
 
 interface Props {
   deps: Deps
-  email: string | null
+  email: string
+  /** The token ends within 7 days */
+  endsSoon: boolean
   onSignOut: (notice?: string) => void
 }
 
-export function SignedIn({ deps, email, onSignOut }: Props) {
+export function SignedIn({ deps, email, endsSoon, onSignOut }: Props) {
   const [ctx, setCtx] = useState<Loaded<ExtensionContext>>({ state: 'loading' })
   const [page, setPage] = useState<PageRead | null>(null)
   const [switching, setSwitching] = useState(false)
@@ -27,7 +29,7 @@ export function SignedIn({ deps, email, onSignOut }: Props) {
         setCtx({ state: 'ok', data })
       } catch (error) {
         if (error instanceof ApiError && error.code === 'unauthorized') {
-          onSignOut('Your Subly session ended. Sign in again to keep adding.')
+          onSignOut(error.message)
           return
         }
         setCtx((previous) =>
@@ -61,6 +63,11 @@ export function SignedIn({ deps, email, onSignOut }: Props) {
         }}
         onSignOut={() => onSignOut()}
       />
+      {endsSoon && (
+        <div className="notice info" role="status">
+          Your sign-in for the extension ends soon. <button type="button" className="link" onClick={() => void deps.openLogin()}>Sign in again</button>
+        </div>
+      )}
       {ctx.state === 'error' && (
         <div className="notice warn" role="alert">
           <p>{ctx.message}</p>
@@ -79,7 +86,7 @@ export function SignedIn({ deps, email, onSignOut }: Props) {
           ctx={data}
           page={page}
           extraction={extraction}
-          onSignedOut={() => onSignOut('Your Subly session ended. Sign in again to keep adding.')}
+          onSignedOut={onSignOut}
         />
       )}
     </main>

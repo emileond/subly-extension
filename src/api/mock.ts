@@ -1,7 +1,7 @@
 import type { AddItemRequest, ExtensionContext } from './types'
 
-/** The access token the mock accepts */
-export const MOCK_TOKEN = 'mock-token'
+/** The extension token the mock accepts. 'sbx_expired' and 'sbx_mfa' get the matching 401 codes; any other token is invalid_token */
+export const MOCK_TOKEN = 'sbx_mock_token_0123456789abcdef'
 
 const CATEGORIES = ['Entertainment', 'Software', 'Productivity', 'Health & Fitness', 'Education', 'News', 'Utilities', 'Other']
 
@@ -24,7 +24,7 @@ function contextFor(workspaceId: number, canAdd: boolean): ExtensionContext {
     paymentMethods: personal ? [{ id: 31, name: 'Visa ••4242' }, { id: 32, name: 'PayPal' }] : [{ id: 41, name: 'Company Amex' }],
     tags: [{ id: 51, name: 'work', color: '#6F55FF' }, { id: 52, name: 'family', color: '#E5484D' }],
     canAdd,
-    limitReason: canAdd ? null : 'Your Free plan includes 10 items and you have 10. Upgrade to add more.',
+    limitReason: canAdd ? null : 'item_limit',
   }
 }
 
@@ -55,7 +55,10 @@ export function createMockFetch(options: MockOptions = {}) {
     if (options.delay) await new Promise((resolve) => setTimeout(resolve, options.delay))
 
     const auth = new Headers(init?.headers).get('Authorization')
-    if (auth !== `Bearer ${MOCK_TOKEN}`) return json(401, { error: { code: 'unauthorized', message: 'Invalid token' } })
+    if (auth !== `Bearer ${MOCK_TOKEN}`) {
+      const code = !auth ? 'unauthorized' : auth.endsWith('sbx_expired') ? 'token_expired' : auth.endsWith('sbx_mfa') ? 'mfa_required' : 'invalid_token'
+      return json(401, { error: { code, message: 'Not signed in' } })
+    }
 
     const body = init?.body ? JSON.parse(String(init.body)) : undefined
     calls.push({ path: url.pathname, body })
@@ -68,32 +71,32 @@ export function createMockFetch(options: MockOptions = {}) {
     if (url.pathname === '/api/extension/items' && init?.method === 'POST') {
       const { workspaceId, force, item } = body as AddItemRequest
       if (!item.name || !(item.amount >= 0)) return json(400, { error: { code: 'invalid', message: 'Name and amount are required.' } })
-      if (/^limit/i.test(item.name)) return json(402, { error: { code: 'plan_limit', message: 'Your Free plan includes 10 items. Upgrade to add more.' } })
-      if (/^netflix/i.test(item.name) && !force) return json(409, { duplicateOf: { id: 7, name: 'Netflix' } })
+      if (/^limit/i.test(item.name)) return json(402, { error: { code: 'item_limit', message: 'Your Free plan includes 10 items. Upgrade to add more.' } })
+      if (/^netflix/i.test(item.name) && !force) return json(409, { error: { code: 'duplicate', message: 'Already in Subly' }, duplicateOf: { id: 7, name: 'Netflix' } })
       const id = nextId++
       return json(201, { id, url: `${url.origin}/recurring/${id}?workspace=${workspaceId}` })
     }
 
     if (url.pathname === '/api/extension/parse' && init?.method === 'POST') {
       parseCalls++
-      if (parseCalls > (options.aiAllowance ?? 2)) {
-        return json(429, { error: { code: 'ai_allowance', message: 'You have used this month’s AI allowance.' } })
-      }
       const page = new URL(body.url)
       const brand = page.hostname.split('.').slice(-2)[0]
-      return json(200, {
-        suggestion: {
-          name: brand.charAt(0).toUpperCase() + brand.slice(1),
-          amount: 12,
-          currency: 'USD',
-          billingFreq: 1,
-          billingRange: 'month',
-          category: 'Software',
-          website: page.origin,
-          confidence: 'medium',
-          source: 'ai',
-        },
-      })
+      const suggestion = {
+        name: brand.charAt(0).toUpperCase() + brand.slice(1),
+        amount: 12,
+        currency: 'USD',
+        billingFreq: 1,
+        billingRange: 'month',
+        category: 'Software',
+        website: page.hostname,
+        confidence: 'medium',
+        source: 'ai',
+      }
+      if (parseCalls > (options.aiAllowance ?? 2)) {
+        // The server's quota body, plus the deterministic suggestion it still has
+        return json(429, { error: 'quota', kind: 'questions', used: 20, limit: 20, suggestion: { ...suggestion, amount: null, currency: null, category: null, confidence: 'low', source: 'merchant' } })
+      }
+      return json(200, { suggestion })
     }
     return json(404, { error: { code: 'not_found', message: 'Not found' } })
   }

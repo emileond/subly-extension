@@ -1,17 +1,28 @@
 import { useCallback, useEffect, useState } from 'react'
+import { signedOutMessage } from '../api/client'
 import type { Deps } from '../deps'
+import { expiresSoon, isExpired } from '../lib/credential'
 import { SignedIn } from './SignedIn'
 import { SignedOut } from './SignedOut'
 
-type AuthState = { status: 'loading' } | { status: 'in'; email: string | null } | { status: 'out'; notice?: string }
+type AuthState =
+  | { status: 'loading' }
+  | { status: 'in'; email: string; endsSoon: boolean }
+  | { status: 'out'; notice?: string }
 
 export default function App({ deps }: { deps: Deps }) {
   const [auth, setAuth] = useState<AuthState>({ status: 'loading' })
 
   useEffect(() => {
     let cancelled = false
-    deps.auth.getSession().then((session) => {
-      if (!cancelled) setAuth(session ? { status: 'in', email: session.email } : { status: 'out' })
+    deps.auth.getCredential().then(async (credential) => {
+      if (cancelled) return
+      if (!credential) return setAuth({ status: 'out' })
+      if (isExpired(credential)) {
+        await deps.auth.signOut()
+        return setAuth({ status: 'out', notice: signedOutMessage('token_expired') })
+      }
+      setAuth({ status: 'in', email: credential.user.email, endsSoon: expiresSoon(credential) })
     })
     return () => {
       cancelled = true
@@ -42,5 +53,5 @@ export default function App({ deps }: { deps: Deps }) {
     )
   }
 
-  return <SignedIn deps={deps} email={auth.email} onSignOut={signOut} />
+  return <SignedIn deps={deps} email={auth.email} endsSoon={auth.endsSoon} onSignOut={signOut} />
 }

@@ -19,8 +19,7 @@ export function createDeps(): Deps {
     auth,
     api: createApiClient({
       baseUrl: BASE_URL,
-      getToken: auth.getAccessToken,
-      refreshToken: auth.refresh,
+      getToken: auth.getToken,
       onSignedOut: () => void auth.signOut(),
     }),
     readPage: readActivePage,

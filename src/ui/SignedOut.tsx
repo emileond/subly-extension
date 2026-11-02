@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
 export function SignedOut({ notice, baseUrl, onSignIn }: { notice?: string; baseUrl: string; onSignIn: () => Promise<void> }) {
-  const [opening, setOpening] = useState(false)
+  const [opened, setOpened] = useState(false)
 
   return (
     <section className="signed-out">
@@ -15,14 +15,18 @@ export function SignedOut({ notice, baseUrl, onSignIn }: { notice?: string; base
       <button
         type="button"
         className="primary"
-        disabled={opening}
         onClick={() => {
-          setOpening(true)
-          onSignIn().finally(() => setOpening(false))
+          setOpened(true)
+          void onSignIn()
         }}
       >
         Sign in to Subly
       </button>
+      {opened && (
+        <p className="notice info" role="status">
+          Waiting for you to sign in in the tab that opened. When it says you’re connected, click the Subly icon again.
+        </p>
+      )}
       <p className="muted small">
         New to Subly? <a href={`${baseUrl}/signup`} target="_blank" rel="noreferrer">Create an account</a>
       </p>

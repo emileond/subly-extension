@@ -1,11 +1,11 @@
 import { APP_ORIGIN, LOGIN_URL } from '../config'
-import { normalizeSession } from '../lib/session'
-import { SESSION_KEY } from '../lib/storage'
+import { normalizeCredential } from '../lib/credential'
+import { CREDENTIAL_KEY } from '../lib/storage'
 
 /** The popup asks the service worker to open the sign-in page */
 const OPEN_LOGIN = 'OPEN_LOGIN'
-/** The sign-in page (web app) sends the signed-in session */
-const SET_SESSION = 'SET_SESSION'
+/** The sign-in page (web app) sends the extension's own token */
+const SET_EXTENSION_TOKEN = 'SET_EXTENSION_TOKEN'
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Only this extension's own pages may ask for the login tab
@@ -25,29 +25,26 @@ async function openLogin() {
 }
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  if (message?.type !== SET_SESSION) return false
-  // externally_connectable already limits this to the Subly origin; check it again before keeping a session
+  if (message?.type !== SET_EXTENSION_TOKEN) return false
+  // externally_connectable already limits this to the Subly origin; check it again before keeping a token
   if (sender.origin !== APP_ORIGIN) {
-    sendResponse({ ok: false, error: 'origin' })
+    sendResponse({ ok: false })
     return false
   }
-  const session = normalizeSession(message.payload?.session)
-  if (!session) {
-    sendResponse({ ok: false, error: 'session' })
+  const credential = normalizeCredential(message.payload)
+  if (!credential) {
+    sendResponse({ ok: false })
     return false
   }
+  // { ok: false } makes the web page sign this token out again and offer a retry
   chrome.storage.local
-    .set({ [SESSION_KEY]: session })
+    .set({ [CREDENTIAL_KEY]: credential })
     .then(() => sendResponse({ ok: true }))
-    .catch(() => sendResponse({ ok: false, error: 'storage' }))
+    .catch(() => sendResponse({ ok: false }))
   return true
 })
 
-// Version 0.0.x kept the whole Supabase session under "sessionData"; keep only what is needed, under the new key
-chrome.runtime.onInstalled.addListener(async () => {
-  const { sessionData } = await chrome.storage.local.get('sessionData')
-  if (sessionData === undefined) return
-  const session = normalizeSession(sessionData)
-  if (session) await chrome.storage.local.set({ [SESSION_KEY]: session })
-  await chrome.storage.local.remove('sessionData')
+// Earlier builds kept a copy of the website's sign-in ("sessionData", "session"). There is no token to turn it into: forget it.
+chrome.runtime.onInstalled.addListener(() => {
+  void chrome.storage.local.remove(['sessionData', 'session'])
 })

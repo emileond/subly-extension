@@ -67,14 +67,16 @@ export function applySuggestion(values: FormValues, suggestion: Suggestion, ctx:
     if (!skip.has(field)) next[field] = value
   }
   if (suggestion.name) set('name', suggestion.name)
-  if (suggestion.amount > 0) set('amount', String(suggestion.amount))
+  const priced = suggestion.amount !== null && suggestion.amount > 0
+  if (priced) set('amount', String(suggestion.amount))
   if (suggestion.currency) set('currency', suggestion.currency.toUpperCase())
   if (suggestion.billingFreq > 0) set('freq', String(suggestion.billingFreq))
   if (suggestion.billingRange) set('range', suggestion.billingRange)
   const category = matchCategory(suggestion.category ?? '', ctx.categories)
   if (category) set('category', category)
-  if (suggestion.website) set('website', suggestion.website)
-  if (!skip.has('date') && suggestion.amount > 0) {
+  // The server answers a bare domain (linear.app); the form holds an address
+  if (suggestion.website) set('website', /^https?:\/\//i.test(suggestion.website) ? suggestion.website : `https://${suggestion.website}`)
+  if (!skip.has('date') && priced) {
     next.date = suggestNextCharge(
       { billingFreq: suggestion.billingFreq, billingRange: suggestion.billingRange, oneTime: false },
       null,
