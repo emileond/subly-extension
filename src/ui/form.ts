@@ -124,7 +124,8 @@ export function toRequest(values: FormValues, workspaceId: number, force: boolea
       projectId: projectId || null,
       tagIds: values.tagIds,
       paymentMethodId: paymentMethodId || null,
-      logo: values.logo || null,
+      // With a website the server sets the logo.dev logo the popup showed; the page's own icon only stands in without one
+      logo: values.website.trim() ? null : values.logo || null,
     },
   }
 }

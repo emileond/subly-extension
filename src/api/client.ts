@@ -39,22 +39,22 @@ const errorCode = (body: unknown): string => {
 
 /** Every 401 means "sign in again"; the code only changes why we say it */
 const SIGNED_OUT: Record<string, string> = {
-  invalid_token: 'You were signed out of the extension, or you signed in again on another browser. Sign in again to keep adding.',
-  token_expired: 'Your sign-in for the extension ended after 90 days. Sign in again to keep adding.',
-  mfa_required: 'Two-factor sign-in was turned on for your account. Sign in again and enter the code.',
+  invalid_token: 'You were signed out of the extension, or signed in on another browser. Sign in again to keep adding.',
+  token_expired: 'Extension sign-ins last 90 days, and yours just ended. Sign in again to keep adding.',
+  mfa_required: 'Two-factor sign-in is now on for your account. Sign in again and enter your code.',
 }
 export const signedOutMessage = (code: string) =>
-  SIGNED_OUT[code] ?? 'The extension is not signed in to Subly. Sign in to keep adding.'
+  SIGNED_OUT[code] ?? 'The extension isn’t signed in to Subly. Sign in to keep adding.'
 
 const FALLBACK: Record<ApiErrorCode, string> = {
   unauthorized: signedOutMessage(''),
-  forbidden: 'Your Subly account has no workspace yet. Finish setting up at web.subly.app, then try again.',
-  limit: 'Your plan does not allow adding more items.',
-  allowance: 'You have used this month’s AI allowance.',
-  rate: 'Too many requests. Wait a minute and try again.',
-  validation: 'Subly did not accept these details. Check the fields and try again.',
-  network: 'Could not reach Subly. Check your connection and try again.',
-  server: 'Subly had a problem. Try again in a moment.',
+  forbidden: 'Your Subly account doesn’t have a workspace yet. Finish setting up at web.subly.app, then try again.',
+  limit: 'You’ve reached your plan’s item limit.',
+  allowance: 'You’ve used this month’s AI allowance.',
+  rate: 'That was a lot of requests at once. Wait a minute and try again.',
+  validation: 'Subly couldn’t save these details. Check the fields and try again.',
+  network: 'Couldn’t reach Subly. Check your connection and try again.',
+  server: 'Something went wrong on our side. Try again in a moment.',
 }
 
 export function createApiClient(options: ApiOptions): ApiClient {

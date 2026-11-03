@@ -12,15 +12,20 @@ interface Props {
 export function PlanPicker({ plans, selected, fallbackCurrency, onSelect }: Props) {
   return (
     <fieldset className="plans">
-      <legend className="label">Which plan is it?</legend>
-      {plans.map((plan, index) => (
-        <label key={index} className={`plan${selected === index ? ' on' : ''}`}>
-          <input type="radio" name="plan" checked={selected === index} onChange={() => onSelect(index)} />
-          <span className="plan-name">{plan.label || 'Plan'}</span>
-          <span className="plan-price">{planPrice(plan, fallbackCurrency)}</span>
-          {plan.highlighted && <span className="tag">Popular</span>}
-        </label>
-      ))}
+      <legend className="label">Which plan is yours?</legend>
+      <div className="plans">
+        {plans.map((plan, index) => (
+          <label key={index} className={`plan${selected === index ? ' on' : ''}`}>
+            <input type="radio" name="plan" checked={selected === index} onChange={() => onSelect(index)} />
+            <span className="radio" aria-hidden="true" />
+            <span className="plan-name">
+              <span>{plan.label || 'Plan'}</span>
+              {plan.highlighted && <span className="badge">Popular</span>}
+            </span>
+            <span className="plan-price">{planPrice(plan, fallbackCurrency)}</span>
+          </label>
+        ))}
+      </div>
     </fieldset>
   )
 }

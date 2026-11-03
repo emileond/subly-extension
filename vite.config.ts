@@ -1,7 +1,7 @@
 import { loadEnv, type Plugin } from 'vite'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import { buildManifest } from './manifest'
+import { buildManifest } from './manifest.ts'
 
 /** Writes dist/manifest.json for the Subly origin this build points at (VITE_SUBLY_URL) */
 function manifestPlugin(baseUrl: string): Plugin {

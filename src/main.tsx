@@ -2,6 +2,9 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './ui/App'
 import { createDeps } from './deps'
+// The app's faces, bundled so the popup never fetches fonts from anywhere
+import '@fontsource-variable/geist/wght.css'
+import '@fontsource-variable/bricolage-grotesque/wght.css'
 import './ui/styles.css'
 
 async function boot() {

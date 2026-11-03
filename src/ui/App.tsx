@@ -39,15 +39,15 @@ export default function App({ deps }: { deps: Deps }) {
 
   if (auth.status === 'loading') {
     return (
-      <main className="shell">
-        <p className="muted" role="status">Loading…</p>
+      <main className="popup" aria-busy="true">
+        <p className="sr-only" role="status">Loading…</p>
       </main>
     )
   }
 
   if (auth.status === 'out') {
     return (
-      <main className="shell">
+      <main className="popup">
         <SignedOut notice={auth.notice} baseUrl={deps.baseUrl} onSignIn={() => deps.openLogin()} />
       </main>
     )

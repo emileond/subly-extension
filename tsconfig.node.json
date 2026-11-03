@@ -8,7 +8,8 @@
     "resolveJsonModule": true,
     "strict": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "allowImportingTsExtensions": true
   },
   "include": ["vite.config.ts", "manifest.ts"]
 }
