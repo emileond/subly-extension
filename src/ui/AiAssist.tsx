@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
+import { ChevronDown, LoaderCircle, Sparkles } from 'lucide-react'
 import { ApiError, type Suggestion } from '../api/types'
 import type { ApiClient } from '../api/client'
 import { buildParseRequest } from '../extract/ai'
 import type { PageSnapshot } from '../extract/types'
+import { Callout } from './kit'
 
 interface Props {
   api: ApiClient
@@ -34,7 +36,7 @@ export function AiAssist({ api, snapshot, workspaceId, weak, onSuggestion, onSig
       if (error instanceof ApiError && error.code === 'allowance') onAllowanceSpent(error.suggestion)
       const message =
         error instanceof ApiError && error.code === 'allowance'
-          ? 'You’ve used your AI allowance for now. We filled in what we could read without it; the rest is yours to fill in.'
+          ? 'You’ve used your AI allowance for now. We filled in what we could read without it; add the rest yourself.'
           : error instanceof Error
             ? error.message
             : 'Something went wrong.'
@@ -42,24 +44,38 @@ export function AiAssist({ api, snapshot, workspaceId, weak, onSuggestion, onSig
     }
   }
 
+  const loading = state.status === 'loading'
   return (
-    <div className="ai">
-      <button type="button" className={weak ? 'secondary strong' : 'secondary'} disabled={state.status === 'loading'} onClick={run}>
-        {state.status === 'loading' ? 'Reading this page…' : 'Read this page with AI'}
+    <section className={`ai${weak ? ' weak' : ''}`} aria-label="Read with AI">
+      <div className="ai-head">
+        <span className="ai-icon" aria-hidden="true">
+          <Sparkles size={15} />
+        </span>
+        <div>
+          <p className="ai-title">{weak ? 'Let AI take a closer look' : 'Something look off?'}</p>
+          <p className="small muted">AI reads the page again and fills in what it finds. Anything you typed stays.</p>
+        </div>
+      </div>
+      <button type="button" className="button outline wide" disabled={loading} onClick={run}>
+        {loading ? <LoaderCircle size={14} className="spin" aria-hidden="true" /> : <Sparkles size={14} aria-hidden="true" />}
+        {loading ? 'Reading this page…' : 'Read this page with AI'}
       </button>
-      <p className="muted small">
-        Sends Subly this page’s address (without anything after “?”), title, meta tags, structured data and up to
-        6,000 characters of its text. Only when you press the button.
-      </p>
-      <details>
-        <summary>Show exactly what will be sent</summary>
+      <details className="disclosure">
+        <summary>
+          What gets sent
+          <ChevronDown size={13} aria-hidden="true" />
+        </summary>
+        <p className="small muted" style={{ marginTop: 8 }}>
+          Only when you press the button: this page’s address (without anything after “?”), title, meta tags, structured
+          data and up to 6,000 characters of its text.
+        </p>
         <pre tabIndex={0}>{JSON.stringify(request, null, 2)}</pre>
       </details>
       {state.status === 'error' && (
-        <p className="notice warn" role="alert">
+        <Callout tone="attention" role="alert">
           {state.message}
-        </p>
+        </Callout>
       )}
-    </div>
+    </section>
   )
 }

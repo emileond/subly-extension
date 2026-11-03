@@ -54,10 +54,12 @@ describe('signed out', () => {
     expect(openLogin).toHaveBeenCalled()
   })
 
-  it('shows the signed-in email and signs out', async () => {
+  it('shows the signed-in email in the account menu and signs out', async () => {
     const { user, signOut } = setup()
+    await user.click(await screen.findByRole('button', { name: 'Account' }))
     expect(await screen.findByText('sam@example.com')).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Sign out' }))
+    expect((screen.getByRole('menuitem', { name: 'Open Subly' }) as HTMLAnchorElement).href).toBe('https://web.subly.app/')
+    await user.click(screen.getByRole('menuitem', { name: 'Sign out' }))
     expect(signOut).toHaveBeenCalled()
     expect(await screen.findByRole('button', { name: 'Sign in to Subly' })).toBeTruthy()
   })
@@ -102,6 +104,8 @@ describe('adding the page', () => {
   it('prefills from the page, offers its plans, and saves with the contract body', async () => {
     const { user, mock } = setup()
     expect(await field('Name')).toHaveProperty('value', 'Paperly')
+    // The logo the app will show (logo.dev for the website), not the page's own icon
+    expect(document.querySelector('.with-logo img')?.getAttribute('src')).toMatch(/^https:\/\/img\.logo\.dev\/paperly\.com\?token=pk_/)
     expect(screen.getByRole('textbox', { name: 'Amount' })).toHaveProperty('value', '10')
     expect(screen.getByRole('radio', { name: /Plus/ })).toHaveProperty('checked', true)
 
@@ -121,7 +125,7 @@ describe('adding the page', () => {
       item: {
         name: 'Paperly', direction: 'out', amount: 18, currency: 'USD', isRecurring: true, billingFreq: 1,
         billingRange: 'month', category: 'Software', website: 'https://www.paperly.com', projectId: null,
-        paymentMethodId: null, tagIds: [], notes: 'Plan: Business', logo: 'https://www.paperly.com/brand/logo.png',
+        paymentMethodId: null, tagIds: [], notes: 'Plan: Business', logo: null,
       },
     })
     expect(body.force).toBeUndefined()
@@ -233,5 +237,11 @@ describe('Read this page with AI', () => {
     // What the server could read without the model is still filled in
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveProperty('value', 'Example-news')
     expect(screen.getByRole('textbox', { name: 'Amount' })).toHaveProperty('value', '')
+  })
+
+  it('keeps the allowance message on a page it read well, where the button sits below the form', async () => {
+    const { user } = setup({ mock: { aiAllowance: 0 } })
+    await user.click(await screen.findByRole('button', { name: 'Read this page with AI' }))
+    expect(await screen.findByText(/used your AI allowance/)).toBeTruthy()
   })
 })

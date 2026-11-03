@@ -9,7 +9,9 @@ Subly**. If the page is hard to read, **Read this page with AI** asks Subly to t
 That's the whole product. It does not list, edit or analyse your subscriptions; the Subly app does that.
 
 - What it reads, what it sends and when: [PRIVACY.md](PRIVACY.md)
-- Manifest V3, React 18, TypeScript, Vite. One popup, one service worker, no content scripts.
+- Manifest V3, React 19, TypeScript, Vite 8. One popup, one service worker, no content scripts.
+- Looks like the Subly app: the v2 tokens (neutral surfaces, near-black primary, violet only for indicators), Geist and
+  Bricolage Grotesque bundled with the extension (no font requests), lucide icons. Light and dark follow the system.
 
 ## How it works
 
@@ -28,7 +30,8 @@ That's the whole product. It does not list, edit or analyse your subscriptions; 
      two-factor was turned on since; no header: a bug). In the last 7 days of the token the popup offers "Sign in
      again".
    - One extension connection per person: signing in on a second browser signs the first one out. The person can also
-     sign the extension out in Subly (Connections → Chrome extension).
+     sign the extension out in Subly (Connections → Chrome extension). Signing out of the website leaves it connected;
+     "Sign out other devices", a password change and a password reset sign it out (`invalid_token`).
 2. **Read the page.** When the popup opens, `chrome.scripting.executeScript` runs `collectPage`
    (`src/extract/collect.ts`) in the active tab (allowed by `activeTab` because the person clicked the extension). It
    returns the URL, title, metas, JSON-LD, microdata offers, icons and visible text.

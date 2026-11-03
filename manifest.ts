@@ -1,4 +1,4 @@
-import pkg from './package.json'
+import pkg from './package.json' with { type: 'json' }
 
 // The public half of the extension's signing key. It pins the extension id, which the web app needs to message us.
 const KEY =

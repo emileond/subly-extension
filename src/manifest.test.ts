@@ -18,7 +18,7 @@ describe('manifest', () => {
   it('keeps the id-pinning key and uses the package version', () => {
     expect(manifest.key.length).toBeGreaterThan(100)
     expect(manifest.version).toBe(pkg.version)
-    expect(manifest.version).toBe('0.1.0')
+    expect(manifest.version).toBe('0.2.0')
   })
 
   it('adds only the local origin of a development build', () => {

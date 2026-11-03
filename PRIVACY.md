@@ -16,8 +16,10 @@ access to that tab only, only for that click). It looks at:
 - the visible text of the page, to find prices and plan names (the first part of long pages plus the lines around
   prices)
 
-All of this is processed inside your browser to prefill the form. It is not stored, and nothing leaves your browser
-at this step. There are no content scripts: the reader is injected on demand, once per click, and never runs on a
+All of this is processed inside your browser to prefill the form. It is not stored, and no page content leaves your
+browser at this step. To show the service's logo next to its name, the popup loads it from logo.dev
+(`https://img.logo.dev/<domain>`), the logo service the Subly app uses: that request carries the site's domain (for
+example `notion.so`), never the full address or anything from the page, and is sent without a referrer. There are no content scripts: the reader is injected on demand, once per click, and never runs on a
 page you did not open the extension on.
 
 ## What it sends, and when
@@ -28,14 +30,15 @@ with the extension's Subly token, over HTTPS.
 - **When the popup opens:** it asks Subly for your workspace, projects, categories, payment methods and tags (to fill
   the form's choices). No page content is sent.
 - **Add to Subly:** sends the item you see in the form: name, amount, currency, how often it renews, next charge date,
-  category, website, notes, project, payment method, tags and logo address, to the workspace you chose.
+  category, website, notes, project, payment method and tags, to the workspace you chose. Subly takes the logo from the
+  website (logo.dev); only when you clear the website does it send the page's own icon address instead.
 - **Read this page with AI** (optional, never automatic): sends the page address *without its query string or
   fragment*, the title, the meta tags above, the structured data and at most 6,000 characters of the page text it
   picked, so Subly can suggest a name, price, cycle and category. The popup shows the exact request before you press
-  the button ("Show exactly what will be sent"). Subly reads it to answer and does not store it.
+  the button ("What gets sent"). Subly reads it to answer and does not store it.
 
-The extension has no analytics, no tracking and no remote code. It talks to no other server, except Subly's
-authentication service, to renew your sign-in (see below).
+The extension has no analytics, no tracking and no remote code. It talks to no other server, except logo.dev for the
+logo picture described above. Its fonts are bundled, so it fetches none.
 
 ## What it stores
 
@@ -49,7 +52,8 @@ Signing in happens on the Subly website (`/chrome-extension-login`), which creat
 The extension accepts it only from the Subly origin it was built for. When it ends or is replaced, you sign in again;
 there is no background renewal. **Sign out** in the popup deletes the token from this browser, and you can also sign the
 extension out from **Connections** in the Subly web app, which stops the token working everywhere. Neither signs you out
-of the website, and signing out of the website does not affect the extension.
+of the website. Signing out of the website does not sign the extension out, but the actions that end every other sign-in
+do: **Sign out other devices**, changing your password and setting a new one from a reset link.
 
 ## Permissions
 
